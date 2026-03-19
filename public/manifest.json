@@ -1,6 +1,6 @@
 {
-  "name": "G730 Performance Dashboard",
-  "short_name": "G730",
+  "name": "Swing Doctor",
+  "short_name": "Swing Doctor",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0d1117",

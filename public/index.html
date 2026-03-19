@@ -6,9 +6,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#0d1117">
-<meta name="apple-mobile-web-app-title" content="G730">
+<meta name="apple-mobile-web-app-title" content="Swing Doctor">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>G730 Performance</title>
+<title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
@@ -163,14 +163,14 @@
 </head>
 <body>
 <div class="loading-overlay" id="loadingOverlay">
-  <div>Loading G730...</div>
+  <div>Loading Swing Doctor...</div>
 </div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
 
 <div class="container">
   <div class="header">
-    <h1>G730 Performance</h1>
+    <h1>Swing Doctor</h1>
     <div class="header-btns">
       <button class="hdr-btn" onclick="syncFromServer()" title="Refresh data from server">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -247,7 +247,7 @@
 
   <div id="emptyState" class="empty-state" style="display:none">
     <div class="empty-state-icon">&#9971;</div>
-    <div class="empty-state-title">Welcome to G730</div>
+    <div class="empty-state-title">Welcome to Swing Doctor</div>
     <div class="empty-state-sub">Import your Bushnell Launch Pro CSV files<br>or sync from your Mac server.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="import-big" onclick="syncFromServer()">Sync from Server</button>
@@ -255,12 +255,12 @@
     </div>
   </div>
 
-  <div class="footer">G730 Performance &middot; Bushnell Launch Pro</div>
+  <div class="footer">Swing Doctor &middot; Bushnell Launch Pro</div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════
-// G730 — Fully client-side golf sim dashboard
+// Swing Doctor — Fully client-side golf sim dashboard
 // All data stored in IndexedDB on the device
 // ═══════════════════════════════════════════════
 
@@ -732,8 +732,9 @@ function updateDashboard() {
   const label = dateFilterMode === 'all' ? 'all time' : dateFilterMode.startsWith('month:') ? dateFilterMode.split(':')[1] : dateFilterMode.split(':')[1];
   const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
   document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
-  updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
-  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab();
+  const allShots = DATA.shots;
+  updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(allShots);
+  updateYardageTable(allShots); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab();
 }
 
 // ─── KPIs ───
@@ -852,7 +853,7 @@ function updateYardageChart(allShots) {
       },
       scales: {
         x: { ticks: { color: (ctx) => TEXT3, font: { size: 10 } }, grid: { display: false } },
-        y: { beginAtZero: true, ticks: { color: TEXT3, font: { size: 10 } }, grid: { color: BORDER } }
+        y: { min: 0, max: 300, ticks: { color: TEXT3, font: { size: 10 } }, grid: { color: BORDER } }
       }
     },
     plugins: [{
@@ -1122,7 +1123,7 @@ function showInstallBanner() {
   const banner = document.createElement('div');
   banner.className = 'install-banner';
   banner.innerHTML = `<div class="install-banner-icon">G7</div><div class="install-banner-text">
-    <div class="install-banner-title">Add G730 to Home Screen</div>
+    <div class="install-banner-title">Add Swing Doctor to Home Screen</div>
     <div class="install-banner-sub">Tap <strong style="font-size:16px">&#9769;</strong> then "Add to Home Screen"</div></div>
     <button class="install-banner-close" onclick="dismissInstallBanner()">&times;</button>`;
   document.body.appendChild(banner);

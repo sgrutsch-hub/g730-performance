@@ -12,13 +12,21 @@
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
-  :root {
+  :root, [data-theme="dark"] {
     --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
     --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
     --accent: #58a6ff; --accent2: #388bfd; --green: #3fb950; --green2: #238636;
     --blue: #58a6ff; --gold: #d29922; --teal: #2ea99a;
     --border: #30363d; --red: #f85149; --orange: #d18616;
     --purple: #bc8cff; --pink: #f778ba;
+  }
+  [data-theme="light"] {
+    --bg: #ffffff; --bg2: #f6f8fa; --bg3: #e8ecf0;
+    --text: #1f2328; --text2: #656d76; --text3: #8b949e;
+    --accent: #0969da; --accent2: #0550ae; --green: #1a7f37; --green2: #1a7f37;
+    --blue: #0969da; --gold: #9a6700; --teal: #1b7c83;
+    --border: #d0d7de; --red: #cf222e; --orange: #bc4c00;
+    --purple: #8250df; --pink: #bf3989;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -30,14 +38,15 @@
   .container { max-width: 800px; margin: 0 auto; padding: 16px; }
 
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-  h1 { font-size: 20px; font-weight: 700; }
-  .header-btns { display: flex; gap: 6px; }
+  h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .header-btns { display: flex; gap: 4px; flex-shrink: 0; }
   .hdr-btn {
     background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--accent); padding: 6px 12px; font-size: 12px; font-weight: 600;
+    color: var(--accent); padding: 6px 10px; font-size: 12px; font-weight: 600;
     cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
   }
   .hdr-btn:active { background: var(--accent2); color: #fff; }
+  .hdr-btn.icon-only { padding: 6px 8px; }
   .hdr-btn.import-btn { border-color: var(--accent); }
   .subtitle { font-size: 11px; color: var(--text3); margin-bottom: 12px; }
 
@@ -116,7 +125,7 @@
   .loading-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: var(--bg); display: flex; align-items: center; justify-content: center;
-    font-size: 16px; color: var(--blue); z-index: 100; flex-direction: column; gap: 12px;
+    font-size: 16px; color: var(--accent); z-index: 100; flex-direction: column; gap: 12px;
   }
   .loading-overlay.hidden { display: none; }
 
@@ -172,12 +181,14 @@
   <div class="header">
     <h1>Swing Doctor</h1>
     <div class="header-btns">
-      <button class="hdr-btn" onclick="syncFromServer()" title="Refresh data from server">
+      <button class="hdr-btn icon-only" onclick="toggleTheme()" title="Toggle light/dark mode" id="themeToggle">
+        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      </button>
+      <button class="hdr-btn icon-only" onclick="hardRefresh()" title="Refresh data &amp; reload">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
-      <button class="hdr-btn import-btn" onclick="document.getElementById('fileInput').click()">
+      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV files">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        Import
       </button>
     </div>
   </div>
@@ -268,9 +279,22 @@ const ELEVATION = 900;
 const DB_NAME = 'g730';
 const DB_VERSION = 1;
 const STORE = 'sessions'; // stores {filename, date, content, importedAt}
-const GREEN = '#3fb950', ACCENT = '#58a6ff', ACCENT2 = '#388bfd', BLUE = '#58a6ff', GOLD = '#d29922',
-  RED = '#f85149', ORANGE = '#d18616', TEAL = '#2ea99a', PURPLE = '#bc8cff', PINK = '#f778ba',
-  TEXT2 = '#8b949e', TEXT3 = '#6e7681', BORDER = '#30363d';
+function cv(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+Object.defineProperties(window, {
+  GREEN:  { get() { return cv('--green'); } },
+  ACCENT: { get() { return cv('--accent'); } },
+  ACCENT2:{ get() { return cv('--accent2'); } },
+  BLUE:   { get() { return cv('--blue'); } },
+  GOLD:   { get() { return cv('--gold'); } },
+  RED:    { get() { return cv('--red'); } },
+  ORANGE: { get() { return cv('--orange'); } },
+  TEAL:   { get() { return cv('--teal'); } },
+  PURPLE: { get() { return cv('--purple'); } },
+  PINK:   { get() { return cv('--pink'); } },
+  TEXT2:  { get() { return cv('--text2'); } },
+  TEXT3:  { get() { return cv('--text3'); } },
+  BORDER: { get() { return cv('--border'); } },
+});
 const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','manage'];
 
 let DATA = null;
@@ -1113,6 +1137,68 @@ async function syncFromServer() {
     await rebuildData();
   } catch (e) { showToast('Sync failed — is server running?'); }
 }
+
+// ─── Hard Refresh ───
+async function hardRefresh() {
+  showToast('Refreshing...');
+  // Clear service worker caches
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  }
+  // Unregister service workers so fresh one installs on reload
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  }
+  // Force reload from server (bypass cache)
+  window.location.reload(true);
+}
+
+// ─── Theme Toggle ───
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('g730-theme', next);
+  updateThemeIcon(next);
+  applyThemeMeta(next);
+  // Update Chart.js colors for theme
+  updateChartColors(next);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  if (theme === 'light') {
+    // Moon icon for "switch to dark"
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    // Sun icon for "switch to light"
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+}
+
+function updateChartColors(theme) {
+  // Re-read CSS variables for chart constants
+  const style = getComputedStyle(document.documentElement);
+  // No need to reassign JS constants — charts re-render from updateDashboard using CSS vars
+  // Just trigger a re-render
+  if (DATA) updateDashboard();
+}
+
+function applyThemeMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#0d1117');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('g730-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+  applyThemeMeta(saved);
+}
+initTheme();
 
 // ─── iOS Install Banner ───
 function showInstallBanner() {

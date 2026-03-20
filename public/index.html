@@ -1138,9 +1138,8 @@ function updateDashboard() {
   const label = dateFilterMode === 'all' ? 'all time' : dateFilterMode.startsWith('month:') ? dateFilterMode.split(':')[1] : dateFilterMode.split(':')[1];
   const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
   document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
-  const allShots = DATA.shots;
-  updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(allShots);
-  updateYardageTable(allShots); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab();
+  updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
+  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab();
 }
 
 // ─── KPIs ───

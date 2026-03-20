@@ -169,32 +169,7 @@
   .install-banner-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
   .install-banner-close { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 4px 8px; }
 
-  /* Login / Profile */
-  .login-screen {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: var(--bg); z-index: 90; display: flex; align-items: center; justify-content: center;
-    padding: 20px;
-  }
-  .login-screen.hidden { display: none; }
-  .login-card {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
-    padding: 28px 24px; max-width: 380px; width: 100%; text-align: center;
-  }
-  .login-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-  .login-sub { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
-  .login-input {
-    width: 100%; padding: 10px 14px; font-size: 14px; border-radius: 10px;
-    border: 1px solid var(--border); background: var(--bg3); color: var(--text);
-    margin-bottom: 10px; font-family: inherit;
-  }
-  .login-input:focus { outline: none; border-color: var(--accent); }
-  .login-btn {
-    width: 100%; padding: 12px; font-size: 15px; font-weight: 700; border-radius: 10px;
-    border: none; background: var(--green2); color: #fff; cursor: pointer; margin-top: 6px;
-  }
-  .login-btn:active { opacity: 0.8; }
-  .login-toggle { font-size: 12px; color: var(--accent); margin-top: 14px; cursor: pointer; }
-  .login-error { font-size: 12px; color: var(--red); margin-top: 8px; min-height: 16px; }
+  /* Profile */
   .profile-tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
   .profile-tile {
     background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
@@ -250,23 +225,6 @@
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
 
-<!-- Login Screen -->
-<div class="login-screen" id="loginScreen">
-  <div class="login-card">
-    <div class="login-title">Swing Doctor</div>
-    <div class="login-sub">Golf Sim Performance Dashboard</div>
-    <div id="profileTiles" class="profile-tiles"></div>
-    <div id="loginForm">
-      <input class="login-input" id="loginUser" type="email" placeholder="Email address" autocapitalize="off" autocorrect="off">
-      <input class="login-input" id="loginName" placeholder="Golfer Name" style="display:none">
-      <input class="login-input" id="loginPass" type="password" placeholder="Password">
-      <button class="login-btn" id="loginBtn" onclick="handleLogin()">Sign In</button>
-      <div class="login-error" id="loginError"></div>
-      <div class="login-toggle" id="loginToggle" onclick="toggleLoginMode()">New here? Create an account</div>
-    </div>
-  </div>
-</div>
-
 <div class="container">
   <div class="header">
     <h1>Swing Doctor</h1>
@@ -275,8 +233,8 @@
       <div class="profile-menu hidden" id="profileMenu">
         <div class="profile-menu-name" id="profileMenuName"></div>
         <button class="profile-menu-item" onclick="switchTab('profile');closeProfileMenu()">My Profile</button>
-        <button class="profile-menu-item" onclick="switchProfile()">Switch Profile</button>
-        <button class="profile-menu-item danger" onclick="logout()">Log Out</button>
+        <div id="profileSwitchList"></div>
+        <button class="profile-menu-item" onclick="addNewProfile()">+ Add Profile</button>
       </div>
       <button class="hdr-btn icon-only" onclick="toggleTheme()" title="Toggle light/dark mode" id="themeToggle">
         <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
@@ -355,7 +313,7 @@
     <div id="tab-profile" class="section-hidden">
       <div class="card">
         <div class="card-title">Golfer Info</div>
-        <div class="profile-field"><label>Email</label><input id="profUsername" disabled></div>
+        <div class="profile-field"><label>Profile</label><input id="profUsername" disabled></div>
         <div class="profile-field"><label>Golfer Name</label><input id="profGolferName" onchange="saveProfileField('golferName', this.value)"></div>
         <div class="profile-field"><label>Launch Sim</label>
           <select id="profLaunchSim" onchange="saveProfileField('launchSim', this.value)">
@@ -407,18 +365,6 @@ const DB_VERSION = 1;
 const STORE = 'sessions'; // stores {filename, date, content, importedAt}
 
 // ─── Profile Management ───
-async function sha256(str) {
-  // crypto.subtle requires HTTPS; fallback for local HTTP dev
-  if (crypto.subtle) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-  // Simple hash fallback (not cryptographic, but sufficient for local client-side use)
-  let h = 0;
-  for (let i = 0; i < str.length; i++) { h = ((h << 5) - h + str.charCodeAt(i)) | 0; }
-  return 'fb' + Math.abs(h).toString(16).padStart(8, '0');
-}
-
 function getProfiles() { return JSON.parse(localStorage.getItem('g730-profiles') || '{}'); }
 function saveProfiles(p) { localStorage.setItem('g730-profiles', JSON.stringify(p)); }
 function getActiveUser() { return localStorage.getItem('g730-active-user') || ''; }
@@ -430,105 +376,49 @@ function lsKey(base) { const u = getActiveUser(); return u ? `g730-${u}-${base}`
 function lsGet(base, fallback) { return localStorage.getItem(lsKey(base)) || fallback || '{}'; }
 function lsSet(base, value) { localStorage.setItem(lsKey(base), value); }
 
-async function createProfile(username, golferName, password) {
+function createProfile(id, golferName) {
   const profiles = getProfiles();
-  if (profiles[username]) throw new Error('Email already registered');
-  profiles[username] = {
-    username, golferName, passwordHash: await sha256(password),
+  if (profiles[id]) return profiles[id];
+  profiles[id] = {
+    username: id, golferName,
     createdAt: new Date().toISOString(),
     profile: { launchSim: '', balls: ['tp5x'], bag: [] }
   };
   saveProfiles(profiles);
-  return profiles[username];
+  return profiles[id];
 }
 
-async function authenticate(username, password) {
+function addNewProfile() {
+  closeProfileMenu();
+  const name = prompt('Golfer name:');
+  if (!name || !name.trim()) return;
+  const id = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+  if (getProfiles()[id]) { showToast('Profile already exists'); return; }
+  createProfile(id, name.trim());
+  switchToProfile(id);
+}
+
+async function switchToProfile(id) {
+  closeProfileMenu();
+  setActiveUser(id);
+  DATA = null;
+  updateProfileUI();
+  renderProfileSwitchList();
+  await rebuildData();
+}
+
+function renderProfileSwitchList() {
   const profiles = getProfiles();
-  const p = profiles[username];
-  if (!p) throw new Error('Email not found');
-  if (p.passwordHash !== await sha256(password)) throw new Error('Wrong password');
-  return p;
-}
-
-let loginMode = 'signin'; // 'signin' or 'register'
-
-function toggleLoginMode() {
-  loginMode = loginMode === 'signin' ? 'register' : 'signin';
-  document.getElementById('loginName').style.display = loginMode === 'register' ? '' : 'none';
-  document.getElementById('loginBtn').textContent = loginMode === 'register' ? 'Create Account' : 'Sign In';
-  document.getElementById('loginToggle').textContent = loginMode === 'register' ? 'Already have an account? Sign in' : 'New here? Create an account';
-  document.getElementById('loginError').textContent = '';
-}
-
-function renderProfileTiles() {
-  const profiles = getProfiles();
-  const names = Object.keys(profiles);
-  if (!names.length) { document.getElementById('profileTiles').innerHTML = ''; return; }
-  document.getElementById('profileTiles').innerHTML = names.map(u => {
+  const active = getActiveUser();
+  const others = Object.keys(profiles).filter(u => u !== active);
+  const el = document.getElementById('profileSwitchList');
+  if (!others.length) { el.innerHTML = ''; return; }
+  el.innerHTML = others.map(u => {
     const p = profiles[u];
-    return `<div class="profile-tile" onclick="quickLogin('${u}')">
-      <div class="profile-tile-name">${p.golferName || u}</div>
-      <div class="profile-tile-user">${u}</div>
-    </div>`;
+    return `<button class="profile-menu-item" onclick="switchToProfile('${u}')" style="color:var(--text2)">
+      ↳ ${p.golferName || u}
+    </button>`;
   }).join('');
-}
-
-function quickLogin(username) {
-  document.getElementById('loginUser').value = username;
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginPass').focus();
-  document.getElementById('loginError').textContent = '';
-}
-
-async function handleLogin() {
-  const username = document.getElementById('loginUser').value.trim().toLowerCase();
-  const password = document.getElementById('loginPass').value;
-  const golferName = document.getElementById('loginName').value.trim();
-  const errorEl = document.getElementById('loginError');
-
-  if (!username) { errorEl.textContent = 'Email required'; return; }
-  if (!password) { errorEl.textContent = 'Password required'; return; }
-
-  try {
-    if (loginMode === 'register') {
-      if (!golferName) { errorEl.textContent = 'Golfer name required'; return; }
-      if (!username.includes('@') || !username.includes('.')) { errorEl.textContent = 'Valid email required'; return; }
-      if (password.length < 4) { errorEl.textContent = 'Password too short (min 4)'; return; }
-      await createProfile(username, golferName, password);
-    } else {
-      await authenticate(username, password);
-    }
-    setActiveUser(username);
-    document.getElementById('loginScreen').classList.add('hidden');
-    updateProfileUI();
-    await rebuildData();
-  } catch (e) {
-    errorEl.textContent = e.message;
-  }
-}
-
-function showLoginScreen() {
-  document.getElementById('loginScreen').classList.remove('hidden');
-  document.getElementById('loginUser').value = '';
-  document.getElementById('loginPass').value = '';
-  document.getElementById('loginName').value = '';
-  document.getElementById('loginError').textContent = '';
-  loginMode = 'signin';
-  toggleLoginMode(); toggleLoginMode(); // reset to signin state
-  renderProfileTiles();
-}
-
-function logout() {
-  closeProfileMenu();
-  setActiveUser('');
-  DATA = null;
-  showLoginScreen();
-}
-
-function switchProfile() {
-  closeProfileMenu();
-  DATA = null;
-  showLoginScreen();
 }
 
 function toggleProfileMenu() {
@@ -1054,37 +944,35 @@ async function runMigration(username) {
 // ─── Init ───
 async function init() {
   try {
-    const activeUser = getActiveUser();
+    let activeUser = getActiveUser();
     const profiles = getProfiles();
 
     // Check if we need to migrate (no profiles exist but old DB might have data)
     if (!Object.keys(profiles).length) {
       const oldSessions = await migrateOldData();
       if (oldSessions.length) {
-        // Auto-create a default profile and migrate
-        try {
-          await createProfile('golfer', 'Golfer', 'golf');
-        } catch (e) { /* profile may already exist from failed prior attempt */ }
+        createProfile('golfer', 'Golfer');
         await runMigration('golfer');
         setActiveUser('golfer');
-        document.getElementById('loginScreen').classList.add('hidden');
-        updateProfileUI();
-        await rebuildData();
-        showToast('Data migrated! Set your name in Profile tab');
-        return;
+        activeUser = 'golfer';
       }
     }
 
-    if (!activeUser || !profiles[activeUser]) {
-      // Show login screen
-      document.getElementById('loadingOverlay').classList.add('hidden');
-      showLoginScreen();
-      return;
+    // No profiles at all — create a default one
+    if (!Object.keys(getProfiles()).length) {
+      createProfile('golfer', 'Golfer');
+      setActiveUser('golfer');
+      activeUser = 'golfer';
     }
 
-    // Active user exists — load their data
-    document.getElementById('loginScreen').classList.add('hidden');
+    // No active user or stale reference — pick the first profile
+    if (!activeUser || !getProfiles()[activeUser]) {
+      activeUser = Object.keys(getProfiles())[0];
+      setActiveUser(activeUser);
+    }
+
     updateProfileUI();
+    renderProfileSwitchList();
     const stored = await getAllSessions();
     if (!stored.length) {
       const bootstrapped = await bootstrapFromServer();
@@ -1651,10 +1539,6 @@ function showInstallBanner() {
   document.body.appendChild(banner);
 }
 function dismissInstallBanner() { const b=document.querySelector('.install-banner'); if(b)b.remove(); localStorage.setItem('g730-install-dismissed','1'); }
-
-// Login form enter key
-document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
-document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPass').focus(); });
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 init();

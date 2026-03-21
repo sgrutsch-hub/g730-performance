@@ -272,6 +272,7 @@
       <button class="tab" data-tab="yardage" onclick="switchTab('yardage')">Yardage</button>
       <button class="tab" data-tab="dispersion" onclick="switchTab('dispersion')">Dispersion</button>
       <button class="tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+      <button class="tab" data-tab="coach" onclick="switchTab('coach')">AI Coach</button>
       <button class="tab" data-tab="manage" onclick="switchTab('manage')">Data</button>
       <button class="tab" data-tab="profile" onclick="switchTab('profile')">Profile</button>
     </div>
@@ -293,6 +294,58 @@
     </div>
     <div id="tab-sessions" class="section-hidden">
       <div class="card"><div class="card-title">Session History</div><div style="overflow-x:auto"><table class="session-table" id="sessionTable"></table></div></div>
+    </div>
+    <div id="tab-coach" class="section-hidden">
+      <div class="card">
+        <div class="card-title">AI Swing Coach</div>
+        <div id="coachIntro" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">
+          Get personalized coaching advice, drill recommendations, and a practice plan based on your shot data.
+          The AI analyzes your carry distances, consistency, spin rates, and miss patterns to identify exactly what to work on.
+        </div>
+        <div id="coachContext" style="margin-bottom:12px">
+          <textarea id="coachInput" placeholder="Optional: tell the coach what you're working on, what feels off, or what you want to improve..."
+            style="width:100%;padding:10px;font-size:13px;border-radius:8px;border:1px solid var(--border);
+            background:var(--bg3);color:var(--text);font-family:inherit;resize:vertical;min-height:60px"></textarea>
+        </div>
+        <button class="hdr-btn import-btn" onclick="runAICoach()" id="coachBtn" style="width:100%;justify-content:center;padding:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Analyze My Swing
+        </button>
+        <div id="coachLoading" style="display:none;text-align:center;padding:20px;color:var(--accent)">
+          <div style="margin-bottom:8px">Analyzing your data...</div>
+          <div style="font-size:11px;color:var(--text3)">This takes 10-15 seconds</div>
+        </div>
+      </div>
+      <div id="coachResults" style="display:none">
+        <div class="card">
+          <div class="card-title">Overall Assessment</div>
+          <div id="coachAssessment" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Handicap Context</div>
+          <div id="coachHandicap" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Priorities</div>
+          <ol id="coachPriorities" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ol>
+        </div>
+        <div class="card">
+          <div class="card-title">Club Insights</div>
+          <div id="coachClubs"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recommended Drills</div>
+          <div id="coachDrills"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Equipment Notes</div>
+          <ul id="coachEquipment" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Next Session Plan</div>
+          <div id="coachNextSession" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+      </div>
     </div>
     <div id="tab-manage" class="section-hidden">
       <div class="card">
@@ -753,7 +806,7 @@ Object.defineProperties(window, {
   TEXT3:  { get() { return cv('--text3'); } },
   BORDER: { get() { return cv('--border'); } },
 });
-const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','manage','profile'];
+const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','coach','manage','profile'];
 
 let DATA = null;
 let selectedClub = null;
@@ -1159,6 +1212,167 @@ async function bootstrapFromServer() {
     }
     return loaded > 0;
   } catch (e) { return false; }
+}
+
+// ─── AI Coach ───
+async function runAICoach() {
+  if (!API.enabled) {
+    // Run locally using current data — build the analysis prompt client-side
+    // and show a message that cloud account is needed for full AI
+    runLocalCoach();
+    return;
+  }
+
+  const btn = document.getElementById('coachBtn');
+  const loading = document.getElementById('coachLoading');
+  const results = document.getElementById('coachResults');
+  const context = document.getElementById('coachInput').value.trim();
+
+  btn.style.display = 'none';
+  loading.style.display = '';
+  results.style.display = 'none';
+
+  try {
+    const analysis = await API.getAIAnalysis(context || null);
+    renderCoachResults(analysis);
+  } catch (e) {
+    showToast('AI analysis failed: ' + e.message);
+    // Fall back to local coach
+    runLocalCoach();
+  } finally {
+    btn.style.display = '';
+    loading.style.display = 'none';
+  }
+}
+
+function runLocalCoach() {
+  // Generate insights from local data without AI
+  if (!DATA || !DATA.shots.length) {
+    showToast('Import some sessions first');
+    return;
+  }
+
+  const fs = DATA.shots.filter(s => s.filtered);
+  const clubs = {};
+  fs.forEach(s => {
+    if (!clubs[s.club]) clubs[s.club] = [];
+    clubs[s.club].push(s);
+  });
+
+  const clubInsights = [];
+  for (const [club, shots] of Object.entries(clubs)) {
+    const carries = shots.map(s => s.carry).filter(Boolean);
+    const speeds = shots.map(s => s.ballSpeed).filter(Boolean);
+    const offlines = shots.map(s => s.offline).filter(c => c != null);
+    const avgCarry = carries.length ? (carries.reduce((a, b) => a + b, 0) / carries.length).toFixed(1) : null;
+    const avgSpeed = speeds.length ? (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) : null;
+    const stdOff = offlines.length > 1 ? Math.sqrt(offlines.reduce((s, v) => s + (v - offlines.reduce((a, b) => a + b, 0) / offlines.length) ** 2, 0) / offlines.length).toFixed(1) : null;
+    const leftPct = offlines.length ? (offlines.filter(v => v < 0).length / offlines.length * 100).toFixed(0) : null;
+
+    const strengths = [];
+    const weaknesses = [];
+
+    if (avgCarry && carries.length >= 5) {
+      const std = Math.sqrt(carries.reduce((s, v) => s + (v - avgCarry) ** 2, 0) / carries.length);
+      if (std < 8) strengths.push('Consistent carry distance (low variance)');
+      else weaknesses.push(`Carry variance is high (${std.toFixed(1)} yds std dev)`);
+    }
+    if (stdOff && stdOff < 10) strengths.push('Tight dispersion pattern');
+    else if (stdOff) weaknesses.push(`Wide dispersion (${stdOff} yds std dev)`);
+    if (leftPct && leftPct > 70) weaknesses.push(`Strong left bias (${leftPct}% of shots go left)`);
+    else if (leftPct && leftPct < 30) weaknesses.push(`Strong right bias (${100 - leftPct}% go right)`);
+
+    clubInsights.push({
+      club_name: club,
+      summary: `${shots.length} shots, avg carry ${avgCarry || '?'} yds, avg speed ${avgSpeed || '?'} mph`,
+      strengths: strengths.length ? strengths : ['Not enough data to assess'],
+      weaknesses: weaknesses.length ? weaknesses : ['Looking good!'],
+      priority_fix: weaknesses.length ? weaknesses[0] : 'Keep doing what you\'re doing',
+    });
+  }
+
+  // Sort by club order
+  const order = {'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,
+    '3 Iron':10,'4 Iron':11,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,
+    'PW':17,'GW':18,'SW':19,'LW':20};
+  clubInsights.sort((a, b) => (order[a.club_name] || 50) - (order[b.club_name] || 50));
+
+  const totalShots = fs.length;
+  const uniqueClubs = Object.keys(clubs).length;
+
+  renderCoachResults({
+    overall_assessment: `Analysis of ${totalShots} filtered shots across ${uniqueClubs} clubs. ` +
+      (API.enabled ? '' : 'Sign up for Swing Doctor Pro to get AI-powered coaching with personalized drills and practice plans.'),
+    handicap_context: 'Connect to Swing Doctor cloud for AI-powered handicap estimation based on your data patterns.',
+    top_priorities: clubInsights.filter(c => c.weaknesses[0] !== 'Looking good!').slice(0, 3).map(c => `${c.club_name}: ${c.priority_fix}`),
+    club_insights: clubInsights,
+    drills: [{
+      name: 'Stock Shot Drill',
+      focus_area: 'consistency',
+      description: 'Hit 10 shots with your 7 iron focusing on the same target. Track carry distance and offline. Goal: get 7/10 within 10 yards of your average.',
+      duration_minutes: 15,
+      difficulty: 'intermediate',
+      expected_improvement: 'Tighter dispersion and more predictable distances',
+    }],
+    equipment_notes: ['Full AI equipment analysis available with Swing Doctor Pro'],
+    next_session_plan: `Focus on your ${clubInsights.length > 0 ? clubInsights[0].club_name : '7 Iron'} — ` +
+      'start with 20 warmup shots, then 30 focused shots tracking carry and offline. Finish with 10 shots on your weakest club.',
+  });
+}
+
+function renderCoachResults(data) {
+  const results = document.getElementById('coachResults');
+  results.style.display = '';
+
+  // Assessment
+  document.getElementById('coachAssessment').textContent = data.overall_assessment || '';
+
+  // Handicap
+  document.getElementById('coachHandicap').textContent = data.handicap_context || '';
+
+  // Priorities
+  const prioEl = document.getElementById('coachPriorities');
+  prioEl.innerHTML = (data.top_priorities || []).map(p => `<li>${p}</li>`).join('');
+
+  // Club insights
+  const clubsEl = document.getElementById('coachClubs');
+  clubsEl.innerHTML = (data.club_insights || []).map(ci => `
+    <div style="border-bottom:1px solid var(--border);padding:10px 0">
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${ci.club_name}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${ci.summary}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Strengths</div>
+          ${ci.strengths.map(s => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">+ ${s}</div>`).join('')}
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Work On</div>
+          ${ci.weaknesses.map(w => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">- ${w}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Drills
+  const drillsEl = document.getElementById('coachDrills');
+  drillsEl.innerHTML = (data.drills || []).map(d => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--bg3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:600;font-size:13px">${d.name}</span>
+        <span style="font-size:10px;color:var(--text3);background:var(--bg2);padding:2px 8px;border-radius:4px">${d.duration_minutes} min · ${d.difficulty}</span>
+      </div>
+      <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${d.focus_area}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px">${d.description}</div>
+      <div style="font-size:11px;color:var(--green)">Expected: ${d.expected_improvement}</div>
+    </div>
+  `).join('');
+
+  // Equipment
+  const equipEl = document.getElementById('coachEquipment');
+  equipEl.innerHTML = (data.equipment_notes || []).map(n => `<li>${n}</li>`).join('');
+
+  // Next session
+  document.getElementById('coachNextSession').textContent = data.next_session_plan || '';
 }
 
 // ─── Migration: move old g730 DB to first profile ───

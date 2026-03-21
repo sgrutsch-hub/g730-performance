@@ -1,7 +1,8 @@
 {
   "name": "Swing Doctor",
   "short_name": "Swing Doctor",
-  "start_url": ".",
+  "start_url": "/app/",
+  "scope": "/app/",
   "display": "standalone",
   "background_color": "#0d1117",
   "theme_color": "#0d1117",

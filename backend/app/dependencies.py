@@ -87,9 +87,11 @@ def require_tier(minimum_tier: str):
     minimum_index = TIER_HIERARCHY.index(minimum_tier) if minimum_tier in TIER_HIERARCHY else 0
 
     async def _check_tier(user: User = Depends(get_current_user)) -> User:
+        # Admin subscription override bypasses normal tier check
+        effective = user.subscription_override or user.subscription_tier
         user_index = (
-            TIER_HIERARCHY.index(user.subscription_tier)
-            if user.subscription_tier in TIER_HIERARCHY
+            TIER_HIERARCHY.index(effective)
+            if effective in TIER_HIERARCHY
             else 0
         )
         if user_index < minimum_index:

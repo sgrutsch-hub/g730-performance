@@ -1,0 +1,339 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-21",
+  "categories": [
+    {
+      "id": "face_control",
+      "name": "Face Control",
+      "drills": [
+        {
+          "diagnosis": "Face closing early",
+          "trigger": "Left miss >55%, smash >1.35",
+          "data_signals": ["high_left_miss_pct", "good_smash", "face_to_path_negative"],
+          "drill_name": "Reverse Engineer Drill — Stop Hooks",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/yGFOxHTxRQs",
+          "youtube_id": "yGFOxHTxRQs",
+          "why": "Directly addresses face closing through impact with a feel-based drill. No swing rebuild needed.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Face closing early",
+          "trigger": "Left miss >55%, smash >1.35",
+          "data_signals": ["high_left_miss_pct", "path_out_to_in", "face_closed"],
+          "drill_name": "Tuck & Turn Shoulder Drill",
+          "instructor": "Clay Ballard",
+          "channel": "Top Speed Golf",
+          "youtube_url": "https://youtu.be/3W0QLhBfeLk",
+          "youtube_id": "3W0QLhBfeLk",
+          "why": "Trail shoulder flying out causes over-the-top + closed face. Great for players who pull irons but slice driver.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Face open at impact",
+          "trigger": "Right miss >55%, push/slice pattern",
+          "data_signals": ["high_right_miss_pct", "face_to_target_positive", "spin_axis_right"],
+          "drill_name": "Square the Face Early in Downswing",
+          "instructor": "Chuck Quinton",
+          "channel": "RotarySwing",
+          "youtube_url": "https://youtu.be/VskCbZJ-lSo",
+          "youtube_id": "VskCbZJ-lSo",
+          "why": "Teaches gradual face rotation starting in transition rather than last-second flip. Data-backed approach.",
+          "priority": 2
+        },
+        {
+          "diagnosis": "Face inconsistency",
+          "trigger": "High offline std dev, mixed L/R misses",
+          "data_signals": ["high_offline_std", "no_dominant_miss_direction"],
+          "drill_name": "Control Clubface at Impact — 9-to-3 Drill",
+          "instructor": "Maggs Golf",
+          "channel": "The Left Rough",
+          "youtube_url": "https://youtu.be/n8u8VJ4ILSU",
+          "youtube_id": "n8u8VJ4ILSU",
+          "why": "Half-swing face control drill. Builds awareness of hand-face relationship before full swing.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "path_direction",
+      "name": "Path / Direction",
+      "drills": [
+        {
+          "diagnosis": "Over the top / out-to-in",
+          "trigger": "Consistent pull or pull-slice",
+          "data_signals": ["club_path_out_to_in_gt5", "left_start_line"],
+          "drill_name": "Incredible Drill to Master Your Swing",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/T6gqADpWoFI",
+          "youtube_id": "T6gqADpWoFI",
+          "why": "Arc awareness drill — understanding the inward circle of the swing. Fixes OTT without thinking about positions.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Over the top / out-to-in",
+          "trigger": "Consistent pull or pull-slice",
+          "data_signals": ["club_path_out_to_in_gt5", "high_spin_axis_right"],
+          "drill_name": "Stop Coming Over the Top — Step Drill",
+          "instructor": "Athletic Motion Golf",
+          "channel": "Athletic Motion Golf",
+          "youtube_url": "https://youtu.be/V5o4A0IrGqg",
+          "youtube_id": "V5o4A0IrGqg",
+          "why": "Step drill forces lower body to initiate downswing. Impossible to come OTT when sequenced correctly.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Excessive in-to-out",
+          "trigger": "Push-draw or snap hook",
+          "data_signals": ["club_path_in_to_out_gt6", "high_right_start_line"],
+          "drill_name": "Stop Hooking — Fix Your Swing Path",
+          "instructor": "Rick Shiels",
+          "channel": "Rick Shiels",
+          "youtube_url": "https://youtu.be/4STWsFzFh9E",
+          "youtube_id": "4STWsFzFh9E",
+          "why": "Clear explanation of what causes hooks. Alignment stick drills to shallow the path back to neutral.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "strike_quality",
+      "name": "Strike Quality",
+      "drills": [
+        {
+          "diagnosis": "Low smash factor (thin/top)",
+          "trigger": "Smash < 1.30 on irons",
+          "data_signals": ["low_smash", "low_peak_height", "low_spin"],
+          "drill_name": "Strike Your Irons Pure — V Swing Drill",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/ASH06DwHaRE",
+          "youtube_id": "ASH06DwHaRE",
+          "why": "V-swing drill teaches proper low point control. Addresses thin shots by finding ball-first contact.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Low smash factor (fat/chunk)",
+          "trigger": "Smash < 1.30, high launch, short carry",
+          "data_signals": ["low_smash", "high_launch_angle", "carry_below_expected"],
+          "drill_name": "Hit the Ball First — Towel Drill",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/N7EJ12GSCPI",
+          "youtube_id": "N7EJ12GSCPI",
+          "why": "Simple towel behind the ball forces forward contact. Instant feedback — if you hit towel, you chunked it.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Inconsistent contact",
+          "trigger": "High ball speed std dev",
+          "data_signals": ["ball_speed_std_gt8"],
+          "drill_name": "Golf Swing Basics — Iron Striking",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/aS_KkDf3TNY",
+          "youtube_id": "aS_KkDf3TNY",
+          "why": "Builds repeatable contact through center-of-swing awareness. Good for 25+ handicappers.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "launch_conditions",
+      "name": "Launch Conditions",
+      "drills": [
+        {
+          "diagnosis": "Launch angle too low",
+          "trigger": "Launch <12 deg on 7i, ballooning drives",
+          "data_signals": ["low_launch", "high_spin_compensating"],
+          "drill_name": "Ball Position Masterclass",
+          "instructor": "Me and My Golf",
+          "channel": "Me and My Golf",
+          "youtube_url": "https://youtu.be/LG1vJv-E6KE",
+          "youtube_id": "LG1vJv-E6KE",
+          "why": "Ball position is the #1 cause of launch issues for amateurs. Simple setup fix, no swing change.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Launch angle too high",
+          "trigger": "Launch >24 deg on 7i, floaty shots",
+          "data_signals": ["high_launch", "high_spin", "balloon_shots"],
+          "drill_name": "Stop Scooping — Hands Ahead at Impact",
+          "instructor": "Clay Ballard",
+          "channel": "Top Speed Golf",
+          "youtube_url": "https://youtu.be/gTMV5kMKfAo",
+          "youtube_id": "gTMV5kMKfAo",
+          "why": "Addresses the flip/scoop that adds dynamic loft. Teaches forward shaft lean at impact.",
+          "priority": 2
+        },
+        {
+          "diagnosis": "Spin too high",
+          "trigger": "Backspin >7000 rpm on 7i",
+          "data_signals": ["excessive_backspin", "steep_attack_angle"],
+          "drill_name": "How to Shallow the Golf Club",
+          "instructor": "Athletic Motion Golf",
+          "channel": "Athletic Motion Golf",
+          "youtube_url": "https://youtu.be/fG5kMKPmhpI",
+          "youtube_id": "fG5kMKPmhpI",
+          "why": "Data-driven approach to shallowing. Reduces steep AoA which directly lowers spin.",
+          "priority": 2
+        },
+        {
+          "diagnosis": "Spin too low",
+          "trigger": "Backspin <3500 rpm on 7i",
+          "data_signals": ["low_spin", "low_peak_height", "ball_runs_out"],
+          "drill_name": "Add Backspin to Your Irons",
+          "instructor": "Rick Shiels",
+          "channel": "Rick Shiels",
+          "youtube_url": "https://youtu.be/i5cKHktz4OY",
+          "youtube_id": "i5cKHktz4OY",
+          "why": "Covers clean contact, ball position, and proper divot to generate spin. Simple adjustments.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "distance_speed",
+      "name": "Distance / Speed",
+      "drills": [
+        {
+          "diagnosis": "Low club/ball speed",
+          "trigger": "Ball speed below expected for club",
+          "data_signals": ["low_ball_speed_for_club"],
+          "drill_name": "Increase Swing Speed — Superspeed Concept",
+          "instructor": "Clay Ballard",
+          "channel": "Top Speed Golf",
+          "youtube_url": "https://youtu.be/bh8FGTX5gA4",
+          "youtube_id": "bh8FGTX5gA4",
+          "why": "Overspeed training concepts explained. Focus on sequencing for speed, not just swinging harder.",
+          "priority": 1
+        },
+        {
+          "diagnosis": "Power leak — casting",
+          "trigger": "Good speed, low smash, early release",
+          "data_signals": ["decent_club_speed", "low_smash", "high_launch"],
+          "drill_name": "Stop Casting — Lag Drill",
+          "instructor": "Athletic Motion Golf",
+          "channel": "Athletic Motion Golf",
+          "youtube_url": "https://youtu.be/ASaPBRnbO5I",
+          "youtube_id": "ASaPBRnbO5I",
+          "why": "Teaches lag retention through feel drills. Fixes the early throw that kills compression.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "dispersion_consistency",
+      "name": "Dispersion / Consistency",
+      "drills": [
+        {
+          "diagnosis": "Wide lateral dispersion",
+          "trigger": "Offline std dev >20 yds",
+          "data_signals": ["offline_std_gt20"],
+          "drill_name": "Alignment & Aim Masterclass",
+          "instructor": "Me and My Golf",
+          "channel": "Me and My Golf",
+          "youtube_url": "https://youtu.be/oUFCbe-VewA",
+          "youtube_id": "oUFCbe-VewA",
+          "why": "Before fixing the swing, fix the aim. Most amateurs aim 15-20 yds off target without knowing.",
+          "priority": 3
+        },
+        {
+          "diagnosis": "Wide distance dispersion",
+          "trigger": "Carry std dev >15 yds",
+          "data_signals": ["carry_std_gt15"],
+          "drill_name": "Develop a Stock Shot — Consistency Drill",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/cf79tCny7sc",
+          "youtube_id": "cf79tCny7sc",
+          "why": "Teaches a repeatable 80% swing that prioritizes center contact over max distance.",
+          "priority": 2
+        },
+        {
+          "diagnosis": "Improving trend stalling",
+          "trigger": "Ball speed / dispersion plateau",
+          "data_signals": ["no_improvement_3_sessions"],
+          "drill_name": "Practice Like a Pro — Range Routine",
+          "instructor": "Rick Shiels",
+          "channel": "Rick Shiels",
+          "youtube_url": "https://youtu.be/NHsaYCC64Bg",
+          "youtube_id": "NHsaYCC64Bg",
+          "why": "Most amateurs practice wrong. Structured range routine with targets, not mindless ball beating.",
+          "priority": 2
+        }
+      ]
+    },
+    {
+      "id": "short_game",
+      "name": "Short Game",
+      "drills": [
+        {
+          "diagnosis": "Chipping inconsistency",
+          "trigger": "High handicap + short game inquiry",
+          "data_signals": ["high_estimated_handicap", "user_short_game_request"],
+          "drill_name": "Simplest Short Game Technique Ever",
+          "instructor": "Danny Maude",
+          "channel": "Danny Maude",
+          "youtube_url": "https://youtu.be/HxvAJNqdxOU",
+          "youtube_id": "HxvAJNqdxOU",
+          "why": "One-lever chipping method. Dead simple for high handicappers who overthink around the green.",
+          "priority": 2
+        },
+        {
+          "diagnosis": "Pitching distance control",
+          "trigger": "Wedge carry std dev >12 yds",
+          "data_signals": ["wedge_carry_std_gt12"],
+          "drill_name": "Clock System for Wedges",
+          "instructor": "Me and My Golf",
+          "channel": "Me and My Golf",
+          "youtube_url": "https://youtu.be/p-z7IQaxRMY",
+          "youtube_id": "p-z7IQaxRMY",
+          "why": "Backswing length controls distance. Gives specific yardages for 9, 10:30, and full positions.",
+          "priority": 2
+        }
+      ]
+    }
+  ],
+  "signal_definitions": {
+    "high_left_miss_pct": "Shots with offline < 0 / total kept shots > 0.55",
+    "high_right_miss_pct": "Shots with offline > 0 / total kept shots > 0.55",
+    "good_smash": "Smash factor > 1.35",
+    "low_smash": "Smash factor < 1.30 on irons",
+    "face_to_path_negative": "Face-to-path angle < -2 degrees",
+    "face_to_target_positive": "Face-to-target angle > 2 degrees",
+    "path_out_to_in": "Club path < -3 degrees",
+    "face_closed": "Face angle < -2 degrees at impact",
+    "high_offline_std": "Offline standard deviation > 25 yards",
+    "no_dominant_miss_direction": "Neither left nor right miss exceeds 60%",
+    "club_path_out_to_in_gt5": "Club path < -5 degrees",
+    "left_start_line": "Launch direction < -2 degrees consistently",
+    "high_spin_axis_right": "Spin axis > 10 degrees (fade/slice spin)",
+    "club_path_in_to_out_gt6": "Club path > 6 degrees",
+    "high_right_start_line": "Launch direction > 3 degrees consistently",
+    "low_peak_height": "Apex height below expected for club",
+    "low_spin": "Spin rate below expected for club",
+    "high_launch_angle": "Launch angle > 24 degrees on 7i equivalent",
+    "carry_below_expected": "Carry distance significantly below expected for ball speed",
+    "ball_speed_std_gt8": "Ball speed standard deviation > 8 mph for same club",
+    "low_launch": "Launch angle < 12 degrees on 7i equivalent",
+    "high_spin_compensating": "Spin rate > 6500 rpm paired with low launch",
+    "high_launch": "Launch angle > 22 degrees on 7i",
+    "high_spin": "Spin rate > 7000 rpm on 7i",
+    "balloon_shots": "High apex with short carry relative to ball speed",
+    "excessive_backspin": "Backspin > 7000 rpm on 7i",
+    "steep_attack_angle": "Attack angle steeper than -6 degrees",
+    "low_ball_speed_for_club": "Ball speed < 100 mph on 7i or < 140 mph driver",
+    "decent_club_speed": "Club speed in normal range for the player",
+    "spin_axis_right": "Spin axis tilted right (fade/slice tendency)",
+    "offline_std_gt20": "Offline standard deviation > 20 yards",
+    "carry_std_gt15": "Carry standard deviation > 15 yards",
+    "no_improvement_3_sessions": "No measurable improvement across last 3+ sessions",
+    "high_estimated_handicap": "Estimated handicap > 25",
+    "user_short_game_request": "User explicitly asks about short game",
+    "wedge_carry_std_gt12": "Wedge carry standard deviation > 12 yards",
+    "ball_runs_out": "Total distance significantly exceeds carry (low stopping power)"
+  }
+}

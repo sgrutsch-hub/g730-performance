@@ -10,7 +10,7 @@ without polluting the golf data model.
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Index, String, func
+from sqlalchemy import Boolean, DateTime, Index, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.models.base import Base
@@ -46,6 +46,14 @@ class User(Base):
     )
     stripe_customer_id: Mapped[str | None] = mapped_column(String(255))
 
+    # ── Admin / override ──
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default="false",
+    )
+    subscription_override: Mapped[str | None] = mapped_column(
+        String(20), nullable=True,
+    )
+
     # ── Account state ──
     is_active: Mapped[bool] = mapped_column(default=True, server_default="true")
     is_verified: Mapped[bool] = mapped_column(default=False, server_default="false")
@@ -70,6 +78,20 @@ class User(Base):
         Index("ix_users_email_lower", func.lower(email), unique=True),
         Index("ix_users_stripe", "stripe_customer_id", unique=True),
     )
+
+    # ── Computed helpers ──
+
+    @property
+    def effective_tier(self) -> str:
+        """Subscription override wins, then normal tier, then free."""
+        if self.subscription_override:
+            return self.subscription_override
+        return self.subscription_tier or "free"
+
+    @property
+    def has_full_access(self) -> bool:
+        """True when the effective tier grants full feature access."""
+        return self.effective_tier in ("pro", "pro_plus", "coach", "academy")
 
     def __repr__(self) -> str:
         return f"<User {self.email}>"

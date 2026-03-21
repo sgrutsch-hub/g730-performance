@@ -1,0 +1,58 @@
+# ═══════════════════════════════════════════
+# Swing Doctor — Local Development Stack
+# ═══════════════════════════════════════════
+# Usage: docker compose up -d
+# API: http://localhost:8000
+# Docs: http://localhost:8000/docs
+# DB: localhost:5432
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: swingdoctor
+      POSTGRES_USER: swingdoctor
+      POSTGRES_PASSWORD: swingdoctor
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swingdoctor"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: development
+      DEBUG: "true"
+      DATABASE_URL: postgresql+asyncpg://swingdoctor:swingdoctor@db:5432/swingdoctor
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: dev-secret-key-change-in-production
+      JWT_SECRET_KEY: dev-jwt-secret-change-in-production
+      ALLOWED_ORIGINS: "http://localhost:3000,http://localhost:8000,https://swing.doctor"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # Mount source for live reload during development
+      - ./app:/app/app:ro
+
+volumes:
+  pgdata:

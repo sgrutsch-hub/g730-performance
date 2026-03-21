@@ -1,0 +1,1 @@
+"""Swing Doctor test suite."""

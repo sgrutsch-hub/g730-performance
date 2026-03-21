@@ -391,20 +391,50 @@
         <div id="ballList"></div>
         <button class="add-btn" onclick="addBallType()">+ Add Ball</button>
       </div>
+      <div class="card" id="cloudAccountCard">
+        <div class="card-title">Swing Doctor Cloud</div>
+        <div id="cloudNotConnected">
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px">
+            Create a free account to unlock cloud sync, AI coaching, and access your data from any device.
+          </div>
+          <div id="cloudAuthForm">
+            <input id="cloudEmail" class="bag-brand" type="email" placeholder="Email" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudPassword" class="bag-brand" type="password" placeholder="Password (8+ chars)" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudName" class="bag-brand" placeholder="Display Name" style="width:100%;margin-bottom:8px;padding:8px 10px">
+            <div style="display:flex;gap:6px">
+              <button class="hdr-btn import-btn" onclick="cloudSignUp()" style="flex:1;justify-content:center;padding:8px">Create Account</button>
+              <button class="hdr-btn" onclick="cloudSignIn()" style="flex:1;justify-content:center;padding:8px">Sign In</button>
+            </div>
+            <div id="cloudAuthError" style="font-size:11px;color:var(--red);margin-top:6px;min-height:16px"></div>
+          </div>
+        </div>
+        <div id="cloudConnected" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+            <span style="font-size:12px;color:var(--green);font-weight:600">Connected</span>
+            <span id="cloudEmailDisplay" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
+          </div>
+          <div id="cloudTier" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="hdr-btn" onclick="cloudUpgradeOrManage()" id="cloudUpgradeBtn" style="flex:1;justify-content:center;padding:8px">Upgrade to Pro</button>
+            <button class="hdr-btn" onclick="cloudLogout()" style="justify-content:center;padding:8px;color:var(--text3)">Log Out</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div id="emptyState" class="empty-state" style="display:none">
     <div class="empty-state-icon">&#9971;</div>
-    <div class="empty-state-title">Welcome to Swing Doctor</div>
-    <div class="empty-state-sub">Import your Bushnell Launch Pro CSV files<br>or sync from your Mac server.</div>
+    <div class="empty-state-title">Stop guessing. Start improving.</div>
+    <div class="empty-state-sub">Import your launch monitor CSV files to get<br>clear diagnosis, coaching, and drills.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="import-big" onclick="syncFromServer()">Sync from Server</button>
       <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSVs</button>
     </div>
   </div>
 
-  <div class="footer">Swing Doctor &middot; Bushnell Launch Pro</div>
+  <div class="footer">Swing Doctor &middot; Your data should coach you.</div>
 </div>
 
 <script>
@@ -1214,6 +1244,95 @@ async function bootstrapFromServer() {
   } catch (e) { return false; }
 }
 
+// ─── Cloud Account ───
+async function cloudSignUp() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const name = document.getElementById('cloudName').value.trim();
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be 8+ characters'; return; }
+  if (!name) { errEl.textContent = 'Display name required'; return; }
+
+  try {
+    await API.register(email, password, name);
+    updateCloudUI();
+    showToast('Account created!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+async function cloudSignIn() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email) { errEl.textContent = 'Email required'; return; }
+  if (!password) { errEl.textContent = 'Password required'; return; }
+
+  try {
+    await API.login(email, password);
+    updateCloudUI();
+    showToast('Signed in!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+function cloudLogout() {
+  API.clearTokens();
+  updateCloudUI();
+  showToast('Logged out');
+}
+
+async function cloudUpgradeOrManage() {
+  try {
+    const status = await API.getSubscriptionStatus();
+    if (status.is_active) {
+      await API.openBillingPortal();
+    } else {
+      // Default to pro monthly — in production, show plan picker
+      showToast('Stripe checkout not configured yet');
+    }
+  } catch (e) {
+    showToast('Billing: ' + e.message);
+  }
+}
+
+function updateCloudUI() {
+  const connected = document.getElementById('cloudConnected');
+  const notConnected = document.getElementById('cloudNotConnected');
+
+  if (API.enabled) {
+    connected.style.display = '';
+    notConnected.style.display = 'none';
+    // Decode email from JWT if available
+    try {
+      const payload = JSON.parse(atob(API.token.split('.')[1]));
+      document.getElementById('cloudEmailDisplay').textContent = payload.sub || '';
+    } catch { /* ignore */ }
+    // Check subscription status
+    API.getSubscriptionStatus().then(status => {
+      const tierEl = document.getElementById('cloudTier');
+      const btn = document.getElementById('cloudUpgradeBtn');
+      const tierNames = { free: 'Free', pro: 'Pro', pro_plus: 'Pro+', coach: 'Coach', academy: 'Academy' };
+      tierEl.textContent = `Plan: ${tierNames[status.tier] || status.tier}`;
+      if (status.tier !== 'free') {
+        btn.textContent = 'Manage Subscription';
+      } else {
+        btn.textContent = 'Upgrade to Pro';
+      }
+    }).catch(() => {});
+  } else {
+    connected.style.display = 'none';
+    notConnected.style.display = '';
+  }
+}
+
 // ─── AI Coach ───
 async function runAICoach() {
   if (!API.enabled) {
@@ -1549,7 +1668,7 @@ function updateDashboard() {
   const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
   document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
   updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
-  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab();
+  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab(); updateCloudUI();
 }
 
 // ─── KPIs ───

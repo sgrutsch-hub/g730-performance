@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swing Doctor — Logo Options</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  body { background: #0a0f0a; color: #e8e8e8; font-family: 'DM Sans', sans-serif; margin: 0; padding: 40px 20px; }
+  h1 { text-align: center; font-family: 'DM Serif Display', serif; color: #d4a843; margin-bottom: 8px; }
+  .subtitle { text-align: center; color: #888; font-size: 14px; margin-bottom: 60px; }
+  .grid { max-width: 1000px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(440px, 1fr)); gap: 40px; }
+  .card { background: #111; border: 1px solid #222; border-radius: 16px; padding: 40px; text-align: center; }
+  .card-label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #d4a843; margin-bottom: 24px; font-weight: 700; }
+  .card-desc { font-size: 13px; color: #777; margin-top: 20px; line-height: 1.5; }
+  .logo-wrap { display: flex; align-items: center; justify-content: center; min-height: 100px; }
+  .dark-bg { background: #0a0f0a; }
+  .light-bg { background: #f5f5f0; border-color: #ddd; }
+  .light-bg .card-label { color: #8b6914; }
+  .light-bg .card-desc { color: #666; }
+  hr { border: none; border-top: 1px solid #222; margin: 60px auto; max-width: 200px; }
+  .section-title { text-align: center; font-size: 13px; color: #555; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 40px; }
+</style>
+</head>
+<body>
+
+<h1>Swing Doctor</h1>
+<p class="subtitle">Logo concepts — all SVG, all using your brand fonts & colors</p>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- OPTION A: Clean wordmark with swing arc -->
+<!-- ══════════════════════════════════════════ -->
+<div class="section-title">Option A — Swing Arc Wordmark</div>
+<div class="grid">
+<div class="card dark-bg">
+<div class="card-label">Dark Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 360 80" width="360" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcA" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981"/>
+      <stop offset="100%" stop-color="#d4a843"/>
+    </linearGradient>
+  </defs>
+  <!-- Swing arc -->
+  <path d="M 30 58 Q 80 10 160 25 Q 240 40 310 12" stroke="url(#arcA)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Ball at end of arc -->
+  <circle cx="310" cy="12" r="4" fill="#d4a843"/>
+  <!-- Text -->
+  <text x="28" y="56" font-family="'DM Serif Display', serif" font-size="38" fill="#e8e8e8" letter-spacing="1">Swing</text>
+  <text x="195" y="56" font-family="'DM Serif Display', serif" font-size="38" fill="#10b981" letter-spacing="1">Doctor</text>
+</svg>
+</div>
+<div class="card-desc">Clean wordmark with emerald-to-gold gradient swing arc. Ball sits at apex.</div>
+</div>
+<div class="card light-bg">
+<div class="card-label">Light Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 360 80" width="360" height="80" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="arcA2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0d9668"/>
+      <stop offset="100%" stop-color="#8b6914"/>
+    </linearGradient>
+  </defs>
+  <path d="M 30 58 Q 80 10 160 25 Q 240 40 310 12" stroke="url(#arcA2)" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="310" cy="12" r="4" fill="#8b6914"/>
+  <text x="28" y="56" font-family="'DM Serif Display', serif" font-size="38" fill="#1a1a1a" letter-spacing="1">Swing</text>
+  <text x="195" y="56" font-family="'DM Serif Display', serif" font-size="38" fill="#0d9668" letter-spacing="1">Doctor</text>
+</svg>
+</div>
+</div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- OPTION B: Monogram icon + wordmark -->
+<!-- ══════════════════════════════════════════ -->
+<div class="section-title">Option B — SD Monogram + Wordmark</div>
+<div class="grid">
+<div class="card dark-bg">
+<div class="card-label">Dark Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 400 80" width="400" height="80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Monogram circle -->
+  <circle cx="36" cy="40" r="32" fill="none" stroke="#10b981" stroke-width="2"/>
+  <!-- S and D interleaved -->
+  <text x="20" y="52" font-family="'DM Serif Display', serif" font-size="32" fill="#10b981">S</text>
+  <text x="36" y="52" font-family="'DM Serif Display', serif" font-size="32" fill="#d4a843">D</text>
+  <!-- Swing arc through monogram -->
+  <path d="M 12 55 Q 36 15 60 50" stroke="#d4a843" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <!-- Wordmark -->
+  <text x="82" y="38" font-family="'DM Serif Display', serif" font-size="28" fill="#e8e8e8" letter-spacing="0.5">Swing</text>
+  <text x="82" y="62" font-family="'DM Serif Display', serif" font-size="28" fill="#10b981" letter-spacing="0.5">Doctor</text>
+</svg>
+</div>
+<div class="card-desc">Circular monogram icon works standalone as app icon. Stacked wordmark for headers.</div>
+</div>
+<div class="card light-bg">
+<div class="card-label">Light Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 400 80" width="400" height="80" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="36" cy="40" r="32" fill="none" stroke="#0d9668" stroke-width="2"/>
+  <text x="20" y="52" font-family="'DM Serif Display', serif" font-size="32" fill="#0d9668">S</text>
+  <text x="36" y="52" font-family="'DM Serif Display', serif" font-size="32" fill="#8b6914">D</text>
+  <path d="M 12 55 Q 36 15 60 50" stroke="#8b6914" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+  <text x="82" y="38" font-family="'DM Serif Display', serif" font-size="28" fill="#1a1a1a" letter-spacing="0.5">Swing</text>
+  <text x="82" y="62" font-family="'DM Serif Display', serif" font-size="28" fill="#0d9668" letter-spacing="0.5">Doctor</text>
+</svg>
+</div>
+</div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- OPTION C: Stethoscope + club mashup -->
+<!-- ══════════════════════════════════════════ -->
+<div class="section-title">Option C — Stethoscope Swing</div>
+<div class="grid">
+<div class="card dark-bg">
+<div class="card-label">Dark Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 380 80" width="380" height="80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stethoscope tubing that looks like a swing path -->
+  <path d="M 18 60 Q 18 20 45 20 Q 65 20 65 35 Q 65 48 50 48" stroke="#10b981" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <!-- Chest piece (like a golf ball) -->
+  <circle cx="50" cy="48" r="5" fill="#10b981"/>
+  <!-- Ear tips become a club head -->
+  <path d="M 18 60 L 12 68" stroke="#d4a843" stroke-width="3" stroke-linecap="round"/>
+  <!-- Ball -->
+  <circle cx="70" cy="55" r="3.5" fill="#d4a843"/>
+  <!-- Text -->
+  <text x="88" y="38" font-family="'DM Serif Display', serif" font-size="28" fill="#e8e8e8" letter-spacing="0.5">Swing</text>
+  <text x="88" y="62" font-family="'DM Serif Display', serif" font-size="28" fill="#10b981" letter-spacing="0.5">Doctor</text>
+</svg>
+</div>
+<div class="card-desc">Stethoscope tubing forms a swing path — "diagnosing your swing." Playful but professional.</div>
+</div>
+<div class="card light-bg">
+<div class="card-label">Light Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 380 80" width="380" height="80" xmlns="http://www.w3.org/2000/svg">
+  <path d="M 18 60 Q 18 20 45 20 Q 65 20 65 35 Q 65 48 50 48" stroke="#0d9668" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <circle cx="50" cy="48" r="5" fill="#0d9668"/>
+  <path d="M 18 60 L 12 68" stroke="#8b6914" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="70" cy="55" r="3.5" fill="#8b6914"/>
+  <text x="88" y="38" font-family="'DM Serif Display', serif" font-size="28" fill="#1a1a1a" letter-spacing="0.5">Swing</text>
+  <text x="88" y="62" font-family="'DM Serif Display', serif" font-size="28" fill="#0d9668" letter-spacing="0.5">Doctor</text>
+</svg>
+</div>
+</div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- OPTION D: Data-driven / minimal -->
+<!-- ══════════════════════════════════════════ -->
+<div class="section-title">Option D — Data Pulse</div>
+<div class="grid">
+<div class="card dark-bg">
+<div class="card-label">Dark Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 400 80" width="400" height="80" xmlns="http://www.w3.org/2000/svg">
+  <!-- EKG/data pulse line that forms a golf swing shape -->
+  <polyline points="10,45 25,45 30,45 35,20 40,60 45,30 50,45 55,45 62,45" stroke="#10b981" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Ball at end -->
+  <circle cx="66" cy="45" r="4" fill="#d4a843"/>
+  <!-- Text inline -->
+  <text x="82" y="42" font-family="'DM Serif Display', serif" font-size="32" fill="#e8e8e8" letter-spacing="1">Swing</text>
+  <text x="233" y="42" font-family="'DM Serif Display', serif" font-size="32" fill="#10b981" letter-spacing="1">Doctor</text>
+  <!-- Tagline -->
+  <text x="82" y="62" font-family="'JetBrains Mono', monospace" font-size="9" fill="#666" letter-spacing="2">EVERY SHOT TELLS A STORY</text>
+</svg>
+</div>
+<div class="card-desc">EKG/heartbeat pulse morphs into a swing data spike. Analytics-forward. Includes tagline.</div>
+</div>
+<div class="card light-bg">
+<div class="card-label">Light Background</div>
+<div class="logo-wrap">
+<svg viewBox="0 0 400 80" width="400" height="80" xmlns="http://www.w3.org/2000/svg">
+  <polyline points="10,45 25,45 30,45 35,20 40,60 45,30 50,45 55,45 62,45" stroke="#0d9668" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="66" cy="45" r="4" fill="#8b6914"/>
+  <text x="82" y="42" font-family="'DM Serif Display', serif" font-size="32" fill="#1a1a1a" letter-spacing="1">Swing</text>
+  <text x="233" y="42" font-family="'DM Serif Display', serif" font-size="32" fill="#0d9668" letter-spacing="1">Doctor</text>
+  <text x="82" y="62" font-family="'JetBrains Mono', monospace" font-size="9" fill="#999" letter-spacing="2">EVERY SHOT TELLS A STORY</text>
+</svg>
+</div>
+</div>
+</div>
+
+<hr>
+
+<!-- ══════════════════════════════════════════ -->
+<!-- APP ICON VARIANTS -->
+<!-- ══════════════════════════════════════════ -->
+<div class="section-title">App Icon Variants (for PWA / mobile)</div>
+<div class="grid">
+<div class="card dark-bg">
+<div class="card-label">Option A icon</div>
+<div class="logo-wrap" style="gap: 24px;">
+<svg viewBox="0 0 120 120" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="26" fill="#0a0f0a"/>
+  <defs><linearGradient id="iconA" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#d4a843"/></linearGradient></defs>
+  <path d="M 25 85 Q 45 25 75 50 Q 95 65 100 30" stroke="url(#iconA)" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="100" cy="30" r="6" fill="#d4a843"/>
+  <text x="22" y="105" font-family="'DM Serif Display', serif" font-size="16" fill="#e8e8e8">SD</text>
+</svg>
+<svg viewBox="0 0 120 120" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="26" fill="#10b981"/>
+  <path d="M 25 85 Q 45 25 75 50 Q 95 65 100 30" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.9"/>
+  <circle cx="100" cy="30" r="6" fill="#d4a843"/>
+  <text x="22" y="105" font-family="'DM Serif Display', serif" font-size="16" fill="#fff">SD</text>
+</svg>
+<svg viewBox="0 0 120 120" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+  <rect width="120" height="120" rx="26" fill="#0d1117"/>
+  <polyline points="20,75 35,75 40,75 48,30 56,90 64,45 72,75 80,75 90,75" stroke="#10b981" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="95" cy="75" r="6" fill="#d4a843"/>
+</svg>
+</div>
+<div class="card-desc">Three app icon treatments: dark, emerald, and data pulse.</div>
+</div>
+</div>
+
+</body>
+</html>

@@ -905,9 +905,16 @@ async function handleFileImport(event) {
     const content = await file.text();
     await saveSession(file.name, content);
     imported++;
+    // Cloud sync: upload to API in background if connected
+    if (API.enabled) {
+      API.uploadSession(file).catch(e => {
+        console.warn('Cloud upload failed (saved locally):', e.message);
+      });
+    }
   }
   event.target.value = '';
-  showToast(`Imported ${imported} file${imported > 1 ? 's' : ''}`);
+  const cloudMsg = API.enabled ? ' (synced to cloud)' : '';
+  showToast(`Imported ${imported} file${imported > 1 ? 's' : ''}${cloudMsg}`);
   await rebuildData();
 }
 
@@ -1364,53 +1371,158 @@ async function runAICoach() {
   }
 }
 
+// Helper stats functions
+function _avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : null; }
+function _std(arr) { if (arr.length < 2) return null; const m = _avg(arr); return Math.sqrt(arr.reduce((s,v) => s + (v-m)**2, 0) / arr.length); }
+function _pct(arr, fn) { return arr.length ? (arr.filter(fn).length / arr.length * 100) : null; }
+
 function runLocalCoach() {
-  // Generate insights from local data without AI
-  if (!DATA || !DATA.shots.length) {
-    showToast('Import some sessions first');
-    return;
-  }
+  if (!DATA || !DATA.shots.length) { showToast('Import some sessions first'); return; }
 
   const fs = DATA.shots.filter(s => s.filtered);
   const clubs = {};
-  fs.forEach(s => {
-    if (!clubs[s.club]) clubs[s.club] = [];
-    clubs[s.club].push(s);
-  });
+  fs.forEach(s => { (clubs[s.club] = clubs[s.club] || []).push(s); });
 
+  // ── Handicap estimation from 7 Iron carry ──
+  const benchmarks7i = [[175,0,5],[165,5,10],[155,10,15],[145,15,20],[135,20,25],[120,25,30],[100,30,36]];
+  const benchmarksDr = [[270,0,5],[250,5,10],[230,10,15],[210,15,20],[190,20,25],[170,25,30],[150,30,36]];
+  const hcFactors = [];
+  let hcLow = 15, hcHigh = 36;
+
+  const iron7 = clubs['7 Iron'];
+  if (iron7 && iron7.length >= 10) {
+    const avg = _avg(iron7.map(s=>s.carry).filter(Boolean));
+    if (avg) {
+      for (const [thresh, lo, hi] of benchmarks7i) {
+        if (avg >= thresh) { hcFactors.push(`7 Iron avg carry ${avg.toFixed(0)} yds`); hcLow = lo; hcHigh = hi; break; }
+      }
+    }
+  }
+  const driver = clubs['Driver'];
+  if (driver && driver.length >= 5) {
+    const avg = _avg(driver.map(s=>s.carry).filter(Boolean));
+    if (avg) {
+      for (const [thresh, lo, hi] of benchmarksDr) {
+        if (avg >= thresh) { hcFactors.push(`Driver avg carry ${avg.toFixed(0)} yds`); hcLow = (hcLow + lo) / 2; hcHigh = (hcHigh + hi) / 2; break; }
+      }
+    }
+  }
+  // Smash factor signal
+  const allSmash = fs.map(s => s.smashFactor).filter(Boolean);
+  if (allSmash.length) {
+    const avgSm = _avg(allSmash);
+    if (avgSm >= 1.45) hcFactors.push(`Excellent smash factor (${avgSm.toFixed(2)})`);
+    else if (avgSm >= 1.40) hcFactors.push(`Good smash factor (${avgSm.toFixed(2)})`);
+    else hcFactors.push(`Smash factor needs work (${avgSm.toFixed(2)})`);
+  }
+
+  // ── Per-club analysis ──
   const clubInsights = [];
   for (const [club, shots] of Object.entries(clubs)) {
     const carries = shots.map(s => s.carry).filter(Boolean);
     const speeds = shots.map(s => s.ballSpeed).filter(Boolean);
+    const spins = shots.map(s => s.spinRate).filter(Boolean);
+    const launches = shots.map(s => s.launchAngle).filter(Boolean);
     const offlines = shots.map(s => s.offline).filter(c => c != null);
-    const avgCarry = carries.length ? (carries.reduce((a, b) => a + b, 0) / carries.length).toFixed(1) : null;
-    const avgSpeed = speeds.length ? (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) : null;
-    const stdOff = offlines.length > 1 ? Math.sqrt(offlines.reduce((s, v) => s + (v - offlines.reduce((a, b) => a + b, 0) / offlines.length) ** 2, 0) / offlines.length).toFixed(1) : null;
-    const leftPct = offlines.length ? (offlines.filter(v => v < 0).length / offlines.length * 100).toFixed(0) : null;
+    const smashes = shots.map(s => s.smashFactor).filter(Boolean);
+    const clubPaths = shots.map(s => s.clubPath).filter(c => c != null);
+    const faceAngles = shots.map(s => s.faceAngle).filter(c => c != null);
+
+    const avgCarry = _avg(carries); const stdCarry = _std(carries);
+    const avgSpeed = _avg(speeds);
+    const avgSpin = _avg(spins);
+    const avgLaunch = _avg(launches);
+    const avgOff = _avg(offlines); const stdOff = _std(offlines);
+    const avgSmash = _avg(smashes);
+    const avgPath = _avg(clubPaths);
+    const avgFace = _avg(faceAngles);
+    const leftPct = _pct(offlines, v => v < 0);
 
     const strengths = [];
     const weaknesses = [];
 
-    if (avgCarry && carries.length >= 5) {
-      const std = Math.sqrt(carries.reduce((s, v) => s + (v - avgCarry) ** 2, 0) / carries.length);
-      if (std < 8) strengths.push('Consistent carry distance (low variance)');
-      else weaknesses.push(`Carry variance is high (${std.toFixed(1)} yds std dev)`);
+    // Carry consistency
+    if (stdCarry != null && carries.length >= 5) {
+      if (stdCarry < 6) strengths.push(`Very consistent carry (${stdCarry.toFixed(1)} yds std dev)`);
+      else if (stdCarry < 10) strengths.push(`Good carry consistency (${stdCarry.toFixed(1)} yds std dev)`);
+      else weaknesses.push(`Carry inconsistent (${stdCarry.toFixed(1)} yds std dev) — focus on strike quality`);
     }
-    if (stdOff && stdOff < 10) strengths.push('Tight dispersion pattern');
-    else if (stdOff) weaknesses.push(`Wide dispersion (${stdOff} yds std dev)`);
-    if (leftPct && leftPct > 70) weaknesses.push(`Strong left bias (${leftPct}% of shots go left)`);
-    else if (leftPct && leftPct < 30) weaknesses.push(`Strong right bias (${100 - leftPct}% go right)`);
+
+    // Dispersion
+    if (stdOff != null && offlines.length >= 5) {
+      if (stdOff < 6) strengths.push(`Tight dispersion (${stdOff.toFixed(1)} yds)`);
+      else if (stdOff < 12) {} // neutral
+      else weaknesses.push(`Wide dispersion (${stdOff.toFixed(1)} yds) — work on face control at impact`);
+    }
+
+    // Miss pattern
+    if (leftPct != null && offlines.length >= 10) {
+      if (leftPct > 75) weaknesses.push(`Pull bias — ${leftPct.toFixed(0)}% of shots go left. Check club path and face angle at impact`);
+      else if (leftPct < 25) weaknesses.push(`Push/slice pattern — ${(100-leftPct).toFixed(0)}% go right. Path is likely out-to-in`);
+      else if (leftPct > 40 && leftPct < 60) strengths.push('Balanced miss pattern (no strong left/right bias)');
+    }
+
+    // Spin analysis
+    if (avgSpin != null && spins.length >= 5) {
+      const isIron = club.includes('Iron') || club === 'PW' || club === 'GW' || club === 'SW' || club === 'LW';
+      const isHybrid = club.includes('Hybrid');
+      if (isIron) {
+        if (avgSpin > 7000) weaknesses.push(`Spin too high (${avgSpin.toFixed(0)} rpm) — ball is ballooning, costing carry distance`);
+        else if (avgSpin < 3500 && !club.includes('5')) weaknesses.push(`Spin low (${avgSpin.toFixed(0)} rpm) — ball won't hold greens`);
+        else strengths.push(`Good spin rate (${avgSpin.toFixed(0)} rpm)`);
+      } else if (isHybrid) {
+        if (avgSpin > 5500) weaknesses.push(`Spin high for a hybrid (${avgSpin.toFixed(0)} rpm) — losing distance`);
+        else strengths.push(`Good hybrid spin (${avgSpin.toFixed(0)} rpm)`);
+      } else if (club === 'Driver') {
+        if (avgSpin > 3200) weaknesses.push(`Driver spin high (${avgSpin.toFixed(0)} rpm) — try lowering tee or teeing it forward`);
+        else if (avgSpin < 1800) weaknesses.push(`Driver spin too low (${avgSpin.toFixed(0)} rpm) — ball dropping out of the air`);
+        else strengths.push(`Good driver spin (${avgSpin.toFixed(0)} rpm)`);
+      }
+    }
+
+    // Launch angle
+    if (avgLaunch != null && launches.length >= 5) {
+      if (club === 'Driver') {
+        if (avgLaunch < 10) weaknesses.push(`Launch too low (${avgLaunch.toFixed(1)}°) — try higher tee or more loft`);
+        else if (avgLaunch > 16) weaknesses.push(`Launch high (${avgLaunch.toFixed(1)}°) — may be hitting up too much or tee too high`);
+        else strengths.push(`Good launch angle (${avgLaunch.toFixed(1)}°)`);
+      } else if (avgLaunch < 14 && (club.includes('Iron') || club.includes('Hybrid'))) {
+        weaknesses.push(`Launch low (${avgLaunch.toFixed(1)}°) — may need to check ball position or shaft flex`);
+      }
+    }
+
+    // Smash factor
+    if (avgSmash != null && smashes.length >= 5) {
+      if (avgSmash >= 1.45) strengths.push(`Excellent strike quality (${avgSmash.toFixed(2)} smash factor)`);
+      else if (avgSmash < 1.35) weaknesses.push(`Strike quality needs work (${avgSmash.toFixed(2)} smash factor) — focus on center contact`);
+    }
+
+    // Club path + face angle combo
+    if (avgPath != null && avgFace != null && clubPaths.length >= 5) {
+      const pathDir = avgPath < -1.5 ? 'out-to-in' : avgPath > 1.5 ? 'in-to-out' : 'neutral';
+      const faceDir = avgFace < -1.5 ? 'closed' : avgFace > 1.5 ? 'open' : 'square';
+      if (pathDir === 'out-to-in' && faceDir === 'closed') weaknesses.push(`Pull pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° closed`);
+      else if (pathDir === 'out-to-in' && faceDir === 'open') weaknesses.push(`Slice pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° open`);
+      else if (pathDir === 'in-to-out' && faceDir === 'closed') strengths.push(`Draw pattern: path ${avgPath.toFixed(1)}° in-to-out + face ${avgFace.toFixed(1)}°`);
+      else if (pathDir === 'neutral' && faceDir === 'square') strengths.push('Neutral path and face — solid swing mechanics');
+    }
+
+    // Summary line
+    const parts = [`${shots.length} shots`];
+    if (avgCarry) parts.push(`avg carry ${avgCarry.toFixed(1)} yds`);
+    if (avgSpeed) parts.push(`avg speed ${avgSpeed.toFixed(1)} mph`);
+    if (avgSpin) parts.push(`${avgSpin.toFixed(0)} rpm`);
+    if (avgSmash) parts.push(`smash ${avgSmash.toFixed(2)}`);
 
     clubInsights.push({
       club_name: club,
-      summary: `${shots.length} shots, avg carry ${avgCarry || '?'} yds, avg speed ${avgSpeed || '?'} mph`,
+      summary: parts.join(', '),
       strengths: strengths.length ? strengths : ['Not enough data to assess'],
-      weaknesses: weaknesses.length ? weaknesses : ['Looking good!'],
-      priority_fix: weaknesses.length ? weaknesses[0] : 'Keep doing what you\'re doing',
+      weaknesses: weaknesses.length ? weaknesses : ['Looking good — keep it up!'],
+      priority_fix: weaknesses.length ? weaknesses[0] : 'Maintain current form',
     });
   }
 
-  // Sort by club order
   const order = {'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,
     '3 Iron':10,'4 Iron':11,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,
     'PW':17,'GW':18,'SW':19,'LW':20};
@@ -1419,23 +1531,106 @@ function runLocalCoach() {
   const totalShots = fs.length;
   const uniqueClubs = Object.keys(clubs).length;
 
+  // ── Generate targeted drills based on actual weaknesses ──
+  const drills = [];
+  const hasDispersionIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('dispersion')));
+  const hasConsistencyIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('inconsistent') || w.includes('variance')));
+  const hasMissPattern = clubInsights.some(c => c.weaknesses.some(w => w.includes('bias') || w.includes('Pull') || w.includes('Slice') || w.includes('push')));
+  const hasSpinIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('Spin')));
+
+  if (hasDispersionIssue) {
+    drills.push({
+      name: 'Gate Drill', focus_area: 'accuracy',
+      description: 'Place two alignment sticks 10 yards apart at your average carry distance. Hit 20 shots trying to land between them. Track success rate. Start with your most consistent club and work toward your worst.',
+      duration_minutes: 20, difficulty: 'intermediate',
+      expected_improvement: 'Tighter landing zone, better face control through impact',
+    });
+  }
+  if (hasConsistencyIssue) {
+    drills.push({
+      name: '10-Shot Blocks', focus_area: 'consistency',
+      description: 'Hit 10 shots with the same club at the same target. After each block, note your avg carry and std dev. Rest 30 seconds between blocks. Do 3 blocks per club. Goal: reduce std dev by 2+ yards over 4 weeks.',
+      duration_minutes: 25, difficulty: 'beginner',
+      expected_improvement: 'More predictable distances, better club selection on course',
+    });
+  }
+  if (hasMissPattern) {
+    drills.push({
+      name: 'Path Correction', focus_area: 'swing path',
+      description: 'Place a headcover 4 inches outside the ball (for pull/hook) or inside (for push/slice). Make half swings avoiding the headcover. This forces your path to shallow out. Gradually increase to full swings over 15 shots.',
+      duration_minutes: 15, difficulty: 'intermediate',
+      expected_improvement: 'Straighter ball flight, reduced miss pattern',
+    });
+  }
+  if (hasSpinIssue) {
+    drills.push({
+      name: 'Strike Location Check', focus_area: 'contact quality',
+      description: 'Apply foot spray or impact tape to the club face. Hit 10 shots and check the strike pattern. If strikes are toward the heel, stand slightly further from the ball. If toe-heavy, stand closer. Goal: center-face contact on 7/10 shots.',
+      duration_minutes: 10, difficulty: 'beginner',
+      expected_improvement: 'Better spin rates, more distance from the same swing',
+    });
+  }
+  if (!drills.length) {
+    drills.push({
+      name: 'Stock Shot Routine', focus_area: 'maintenance',
+      description: 'Your numbers look solid. Hit 10 shots per club through your bag, focusing on tempo and target. Track any club where carry drops more than 5 yards from your average — that\'s your early warning system.',
+      duration_minutes: 30, difficulty: 'intermediate',
+      expected_improvement: 'Maintain current form, catch regression early',
+    });
+  }
+
+  // ── Handicap context ──
+  let hcContext;
+  if (hcFactors.length) {
+    hcContext = `Estimated handicap range: ${Math.round(hcLow)}-${Math.round(hcHigh)}. Based on: ${hcFactors.join('; ')}. `;
+    hcContext += hcHigh <= 10 ? 'Your ball striking is strong — short game and course management are likely the biggest gaps.' :
+      hcHigh <= 20 ? 'Consistency is your main opportunity. Reducing carry variance by 3-5 yards per club would drop 2-3 strokes.' :
+      'Focus on solid contact first. Better strike quality (smash factor) gives you free distance with the same swing.';
+  } else {
+    hcContext = 'Need more data (especially 7 Iron and Driver) for a reliable handicap estimate. Keep importing sessions.';
+  }
+
+  // ── Overall assessment ──
+  const bestClub = clubInsights.find(c => c.weaknesses[0]?.includes('Looking good') || c.weaknesses[0]?.includes('Maintain'));
+  const worstClub = clubInsights.filter(c => c.weaknesses.length > 0 && !c.weaknesses[0]?.includes('Looking good')).slice(-1)[0];
+  let assessment = `Analysis of ${totalShots} filtered shots across ${uniqueClubs} clubs. `;
+  if (bestClub) assessment += `Your ${bestClub.club_name} is your most reliable club. `;
+  if (worstClub) assessment += `Your ${worstClub.club_name} needs the most attention. `;
+  if (!API.enabled) assessment += 'Upgrade to Pro for full AI coaching with personalized session plans.';
+
+  // ── Next session plan ──
+  const weakestClub = clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain'));
+  const focusClub = weakestClub.length ? weakestClub[0].club_name : (clubInsights[0]?.club_name || '7 Iron');
+  const secondClub = weakestClub.length > 1 ? weakestClub[1].club_name : '7 Iron';
+  const nextPlan = `Warm up: 10 easy swings with ${secondClub}. Main block: 30 focused shots with ${focusClub} — ${weakestClub[0]?.priority_fix || 'track carry and offline'}. Cool down: 10 shots alternating between your two most consistent clubs. Total: ~50 shots, 45 minutes.`;
+
+  // ── Equipment notes ──
+  const equipNotes = [];
+  const allSpeeds = fs.map(s => s.ballSpeed).filter(Boolean);
+  if (allSpeeds.length) {
+    const maxSpeed = Math.max(...allSpeeds);
+    if (maxSpeed > 165) equipNotes.push('Your ball speed supports stiff or x-stiff shafts');
+    else if (maxSpeed > 140) equipNotes.push('Regular to stiff shaft flex is appropriate for your speed');
+    else equipNotes.push('Consider regular flex shafts for your swing speed');
+  }
+  // Gap analysis
+  const clubCarries = clubInsights.filter(c => c.summary.includes('avg carry')).map(c => ({
+    name: c.club_name,
+    carry: parseFloat(c.summary.match(/avg carry ([\d.]+)/)?.[1] || 0),
+  })).filter(c => c.carry > 0).sort((a,b) => b.carry - a.carry);
+  for (let i = 0; i < clubCarries.length - 1; i++) {
+    const gap = clubCarries[i].carry - clubCarries[i+1].carry;
+    if (gap > 25) equipNotes.push(`${Math.round(gap)} yard gap between ${clubCarries[i].name} and ${clubCarries[i+1].name} — consider adding a club in between`);
+  }
+
   renderCoachResults({
-    overall_assessment: `Analysis of ${totalShots} filtered shots across ${uniqueClubs} clubs. ` +
-      (API.enabled ? '' : 'Sign up for Swing Doctor Pro to get AI-powered coaching with personalized drills and practice plans.'),
-    handicap_context: 'Connect to Swing Doctor cloud for AI-powered handicap estimation based on your data patterns.',
-    top_priorities: clubInsights.filter(c => c.weaknesses[0] !== 'Looking good!').slice(0, 3).map(c => `${c.club_name}: ${c.priority_fix}`),
+    overall_assessment: assessment,
+    handicap_context: hcContext,
+    top_priorities: clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain')).slice(0, 3).map(c => `${c.club_name}: ${c.priority_fix}`),
     club_insights: clubInsights,
-    drills: [{
-      name: 'Stock Shot Drill',
-      focus_area: 'consistency',
-      description: 'Hit 10 shots with your 7 iron focusing on the same target. Track carry distance and offline. Goal: get 7/10 within 10 yards of your average.',
-      duration_minutes: 15,
-      difficulty: 'intermediate',
-      expected_improvement: 'Tighter dispersion and more predictable distances',
-    }],
-    equipment_notes: ['Full AI equipment analysis available with Swing Doctor Pro'],
-    next_session_plan: `Focus on your ${clubInsights.length > 0 ? clubInsights[0].club_name : '7 Iron'} — ` +
-      'start with 20 warmup shots, then 30 focused shots tracking carry and offline. Finish with 10 shots on your weakest club.',
+    drills,
+    equipment_notes: equipNotes.length ? equipNotes : ['Your equipment setup looks reasonable based on the data'],
+    next_session_plan: nextPlan,
   });
 }
 

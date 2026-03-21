@@ -14,7 +14,7 @@ Passwords:
 """
 
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from jose import JWTError, jwt
@@ -57,7 +57,7 @@ def create_access_token(
         subject: The user ID (stored as 'sub' claim)
         extra_claims: Additional JWT claims (e.g., subscription tier)
     """
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=settings.jwt_access_token_expire_minutes)
 
     payload = {
@@ -76,7 +76,7 @@ def create_refresh_token(subject: str | uuid.UUID) -> str:
 
     Only valid for minting new access tokens — cannot be used for API auth.
     """
-    now = datetime.now(UTC)
+    now = datetime.now(timezone.utc)
     expire = now + timedelta(days=settings.jwt_refresh_token_expire_days)
 
     payload = {

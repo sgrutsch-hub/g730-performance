@@ -7,7 +7,7 @@ All auth logic lives here, not in route handlers. Routes are thin
 wrappers that validate input, call services, and format responses.
 """
 
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -115,7 +115,7 @@ async def login_user(
         raise AuthenticationError("Account is deactivated")
 
     # Update last login timestamp
-    user.last_login_at = datetime.now(UTC)
+    user.last_login_at = datetime.now(timezone.utc)
     await db.commit()
 
     access_token = create_access_token(

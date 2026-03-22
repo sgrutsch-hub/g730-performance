@@ -188,15 +188,24 @@ async function handleSubmit(e) {
       if (password.length < 8) { throw new Error('Password must be 8+ characters'); }
 
       // Register
-      const regRes = await fetch(`${API}/auth/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, display_name: name }),
-      });
+      let regRes;
+      try {
+        regRes = await fetch(`${API}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, display_name: name }),
+        });
+      } catch (netErr) {
+        throw new Error('Unable to connect to server. Please try again.');
+      }
 
       if (!regRes.ok) {
         const err = await regRes.json().catch(() => ({}));
-        throw new Error(err.detail || err.message || 'Registration failed');
+        const msg = err.detail || err.message || 'Registration failed';
+        if (regRes.status === 409) {
+          throw new Error('An account with this email already exists. Try signing in instead.');
+        }
+        throw new Error(msg);
       }
 
       tokens = await regRes.json();
@@ -206,15 +215,20 @@ async function handleSubmit(e) {
 
       if (!email || !password) { throw new Error('Email and password required'); }
 
-      const loginRes = await fetch(`${API}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+      let loginRes;
+      try {
+        loginRes = await fetch(`${API}/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+      } catch (netErr) {
+        throw new Error('Unable to connect to server. Please try again.');
+      }
 
       if (!loginRes.ok) {
         const err = await loginRes.json().catch(() => ({}));
-        throw new Error(err.detail || err.message || 'Login failed');
+        throw new Error(err.detail || err.message || 'Invalid email or password');
       }
 
       tokens = await loginRes.json();

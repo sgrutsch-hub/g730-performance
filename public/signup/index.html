@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start Your Trial — Swing Doctor</title>
+<link rel="icon" href="/apple-touch-icon.png">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    background: #0a0f0a; color: #e8e8e8;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .card {
+    background: #111611; border: 1px solid #1a2a1a; border-radius: 20px;
+    padding: 40px 32px; max-width: 420px; width: 100%; text-align: center;
+  }
+  .logo { font-family: 'DM Serif Display', serif; font-size: 28px; color: #10b981; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #6b7b6b; margin-bottom: 28px; }
+  .price-row { display: flex; align-items: baseline; justify-content: center; gap: 8px; margin-bottom: 6px; }
+  .price { font-size: 36px; font-weight: 700; color: #10b981; }
+  .price-period { font-size: 14px; color: #6b7b6b; }
+  .price-note { font-size: 12px; color: #4a5a4a; margin-bottom: 28px; }
+  .divider { height: 1px; background: #1a2a1a; margin: 0 0 24px; }
+  .form-group { margin-bottom: 14px; text-align: left; }
+  .form-group label { font-size: 12px; font-weight: 600; color: #8a9a8a; display: block; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .form-group input {
+    width: 100%; padding: 12px 14px; font-size: 15px; font-family: inherit;
+    background: #0a0f0a; border: 1px solid #1a2a1a; border-radius: 10px; color: #e8e8e8;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { outline: none; border-color: #10b981; }
+  .form-group input::placeholder { color: #3a4a3a; }
+  .btn {
+    width: 100%; padding: 14px; font-size: 16px; font-weight: 700; font-family: inherit;
+    background: #10b981; color: #0a0f0a; border: none; border-radius: 12px;
+    cursor: pointer; margin-top: 8px; transition: all 0.2s; display: flex;
+    align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn:hover { background: #34d399; transform: translateY(-1px); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn .spinner { display: none; width: 18px; height: 18px; border: 2px solid #0a0f0a; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  .btn.loading .spinner { display: block; }
+  .btn.loading .btn-text { display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { font-size: 13px; color: #ef4444; margin-top: 12px; min-height: 18px; }
+  .features { text-align: left; margin: 20px 0; }
+  .features li { font-size: 13px; color: #8a9a8a; list-style: none; padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+  .features li::before { content: '\2713'; color: #10b981; font-weight: 700; font-size: 14px; }
+  .login-link { font-size: 13px; color: #6b7b6b; margin-top: 16px; }
+  .login-link a { color: #10b981; text-decoration: none; }
+  .login-link a:hover { text-decoration: underline; }
+  .back-link { position: fixed; top: 20px; left: 20px; color: #4a5a4a; text-decoration: none; font-size: 13px; display: flex; align-items: center; gap: 4px; }
+  .back-link:hover { color: #10b981; }
+  .secure-note { font-size: 11px; color: #3a4a3a; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .step-indicator { display: flex; gap: 8px; justify-content: center; margin-bottom: 20px; }
+  .step { width: 8px; height: 8px; border-radius: 50%; background: #1a2a1a; transition: background 0.3s; }
+  .step.active { background: #10b981; }
+
+  /* Login mode */
+  .login-fields { display: none; }
+  body.login-mode .signup-fields { display: none; }
+  body.login-mode .login-fields { display: block; }
+</style>
+</head>
+<body>
+
+<a href="/" class="back-link">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+  Back
+</a>
+
+<div class="card">
+  <div class="logo">Swing Doctor</div>
+  <div class="subtitle">Golf Sim Performance Analytics</div>
+
+  <div class="step-indicator">
+    <div class="step active" id="step1"></div>
+    <div class="step" id="step2"></div>
+  </div>
+
+  <div class="price-row">
+    <span class="price">$1.99</span>
+    <span class="price-period">for 30 days</span>
+  </div>
+  <div class="price-note">Then $19/mo &middot; Cancel anytime</div>
+
+  <div class="divider"></div>
+
+  <form id="signupForm" onsubmit="handleSubmit(event)">
+    <div class="signup-fields">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="name" placeholder="Your name" required autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@email.com" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="8+ characters" required minlength="8" autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="login-fields">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="loginEmail" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" autocomplete="current-password">
+      </div>
+    </div>
+
+    <button type="submit" class="btn" id="submitBtn">
+      <span class="spinner"></span>
+      <span class="btn-text">Create Account & Start Trial</span>
+    </button>
+
+    <div class="error" id="errorMsg"></div>
+  </form>
+
+  <ul class="features">
+    <li>Unlimited session uploads</li>
+    <li>AI-powered swing coaching</li>
+    <li>Club yardage maps & trends</li>
+    <li>Handicap estimation</li>
+    <li>Works with Bushnell, SkyTrak & more</li>
+  </ul>
+
+  <div class="login-link signup-fields">
+    Already have an account? <a href="#" onclick="toggleMode('login')">Sign in</a>
+  </div>
+  <div class="login-link login-fields" style="display:none">
+    Need an account? <a href="#" onclick="toggleMode('signup')">Sign up</a>
+  </div>
+
+  <div class="secure-note">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    Secured by Stripe &middot; 256-bit encryption
+  </div>
+</div>
+
+<script>
+const API = location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+  ? 'http://localhost:8000/api/v1'
+  : 'https://swing-doctor-api.fly.dev/api/v1';
+
+let mode = 'signup';
+
+function toggleMode(m) {
+  mode = m;
+  document.body.classList.toggle('login-mode', m === 'login');
+  document.getElementById('submitBtn').querySelector('.btn-text').textContent =
+    m === 'login' ? 'Sign In & Continue' : 'Create Account & Start Trial';
+  document.getElementById('errorMsg').textContent = '';
+  // Toggle visibility of login-link divs
+  document.querySelectorAll('.signup-fields').forEach(el => el.style.display = m === 'signup' ? '' : 'none');
+  document.querySelectorAll('.login-fields').forEach(el => el.style.display = m === 'login' ? '' : 'none');
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const errorEl = document.getElementById('errorMsg');
+  errorEl.textContent = '';
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    let tokens;
+
+    if (mode === 'signup') {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      if (!name || !email || !password) { throw new Error('All fields are required'); }
+      if (password.length < 8) { throw new Error('Password must be 8+ characters'); }
+
+      // Register
+      const regRes = await fetch(`${API}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, display_name: name }),
+      });
+
+      if (!regRes.ok) {
+        const err = await regRes.json().catch(() => ({}));
+        throw new Error(err.detail || err.message || 'Registration failed');
+      }
+
+      tokens = await regRes.json();
+    } else {
+      const email = document.getElementById('loginEmail').value.trim();
+      const password = document.getElementById('loginPassword').value;
+
+      if (!email || !password) { throw new Error('Email and password required'); }
+
+      const loginRes = await fetch(`${API}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!loginRes.ok) {
+        const err = await loginRes.json().catch(() => ({}));
+        throw new Error(err.detail || err.message || 'Login failed');
+      }
+
+      tokens = await loginRes.json();
+    }
+
+    // Store tokens
+    localStorage.setItem('sd_access_token', tokens.access_token);
+    localStorage.setItem('sd_refresh_token', tokens.refresh_token);
+
+    // Step 2: Create Stripe Checkout
+    document.getElementById('step2').classList.add('active');
+
+    const checkoutRes = await fetch(`${API}/billing/checkout`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokens.access_token}`,
+      },
+      body: JSON.stringify({
+        price_id: 'price_1TDZg8Q9ywd0WYiKqOU7QX2c',
+        success_url: `${location.origin}/app/?welcome=true`,
+        cancel_url: `${location.origin}/signup/?canceled=true`,
+      }),
+    });
+
+    if (!checkoutRes.ok) {
+      // If checkout fails (e.g. no Stripe price configured yet), go straight to app
+      console.warn('Checkout not configured, redirecting to app');
+      window.location.href = '/app/?welcome=true';
+      return;
+    }
+
+    const checkout = await checkoutRes.json();
+    window.location.href = checkout.checkout_url;
+
+  } catch (err) {
+    errorEl.textContent = err.message;
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// Check for canceled checkout
+if (new URLSearchParams(location.search).get('canceled')) {
+  document.getElementById('errorMsg').textContent = 'Checkout canceled. Try again when ready.';
+}
+</script>
+</body>
+</html>

@@ -54,8 +54,11 @@ async def create_checkout_session(
     """
     _configure_stripe()
 
+    # Track if this is a new Stripe customer (for trial coupon)
+    is_new_customer = not user.stripe_customer_id
+
     # Create or reuse Stripe customer
-    if not user.stripe_customer_id:
+    if is_new_customer:
         customer = stripe.Customer.create(
             email=user.email,
             name=user.display_name,
@@ -63,21 +66,27 @@ async def create_checkout_session(
         )
         user.stripe_customer_id = customer.id
         await db.commit()
-    else:
-        customer_id = user.stripe_customer_id
 
-    session = stripe.checkout.Session.create(
-        customer=user.stripe_customer_id,
-        mode="subscription",
-        line_items=[{"price": price_id, "quantity": 1}],
-        success_url=success_url,
-        cancel_url=cancel_url,
-        metadata={"user_id": str(user.id)},
-        subscription_data={
+    settings = get_settings()
+    session_kwargs: dict = {
+        "customer": user.stripe_customer_id,
+        "mode": "subscription",
+        "line_items": [{"price": price_id, "quantity": 1}],
+        "success_url": success_url,
+        "cancel_url": cancel_url,
+        "metadata": {"user_id": str(user.id)},
+        "subscription_data": {
             "metadata": {"user_id": str(user.id)},
         },
-        allow_promotion_codes=True,
-    )
+        "allow_promotion_codes": True,
+    }
+
+    # Apply trial coupon for first-time subscribers ($1.99 first month)
+    if settings.stripe_trial_coupon and is_new_customer:
+        session_kwargs["discounts"] = [{"coupon": settings.stripe_trial_coupon}]
+        session_kwargs.pop("allow_promotion_codes", None)  # Can't combine with discounts
+
+    session = stripe.checkout.Session.create(**session_kwargs)
 
     return session.url
 

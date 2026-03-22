@@ -55,6 +55,8 @@ class Settings(BaseSettings):
     stripe_price_pro_yearly: str = ""
     stripe_price_pro_plus_monthly: str = ""
     stripe_price_pro_plus_yearly: str = ""
+    stripe_trial_coupon: str = ""
+    stripe_publishable_key: str = ""
 
     # ── AI ──
     anthropic_api_key: str = ""

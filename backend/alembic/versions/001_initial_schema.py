@@ -16,7 +16,7 @@ depends_on = None
 
 _NOW = sa.func.now()
 _TS = sa.DateTime(timezone=True)
-_UUID = _UUID
+_UUID = postgresql.UUID(as_uuid=True)
 
 
 def _timestamps() -> list:
@@ -39,6 +39,8 @@ def upgrade() -> None:
         sa.Column("auth_provider_id", sa.String(255), nullable=True),
         sa.Column("subscription_tier", sa.String(20), server_default="free", nullable=False),
         sa.Column("stripe_customer_id", sa.String(255), nullable=True),
+        sa.Column("is_admin", sa.Boolean(), server_default="false", nullable=False),
+        sa.Column("subscription_override", sa.String(20), nullable=True),
         sa.Column("is_active", sa.Boolean(), server_default="true", nullable=False),
         sa.Column("is_verified", sa.Boolean(), server_default="false", nullable=False),
         sa.Column("last_login_at", sa.DateTime(timezone=True), nullable=True),

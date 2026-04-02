@@ -1976,8 +1976,9 @@ function onDateFilterChange() { dateFilterMode = document.getElementById('dateFi
 function onBallTypeFilterChange() { ballTypeFilter = document.getElementById('ballTypeFilter').value; updateDashboard(); }
 
 function buildBallTypeFilter() {
-  const types = [...new Set(DATA.shots.map(s => s.ballType))].sort();
   const select = document.getElementById('ballTypeFilter');
+  if (!select) return; // Ball filter removed from UI
+  const types = [...new Set(DATA.shots.map(s => s.ballType))].sort();
   let html = '<option value="all">All Balls</option>';
   types.forEach(t => { html += `<option value="${t}">${t}</option>`; });
   select.innerHTML = html;

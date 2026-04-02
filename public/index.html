@@ -1,1265 +1,2338 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SwingDoctor — Every Shot Tells a Story</title>
-  <meta name="description" content="Advanced golf analytics and AI coaching. Upload your launch monitor data, get personalized drill recommendations, and track your improvement over time." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..700;1,9..40,300..700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-  <style>
-    /* ============================================
-       RESET & BASE
-       ============================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-title" content="Swing Doctor">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Swing Doctor</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root, [data-theme="dark"] {
+    --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
+    --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+    --accent: #58a6ff; --accent2: #388bfd; --green: #3fb950; --green2: #238636;
+    --blue: #58a6ff; --gold: #d29922; --teal: #2ea99a;
+    --border: #30363d; --red: #f85149; --orange: #d18616;
+    --purple: #bc8cff; --pink: #f778ba;
+  }
+  [data-theme="light"] {
+    --bg: #ffffff; --bg2: #f6f8fa; --bg3: #e8ecf0;
+    --text: #1f2328; --text2: #656d76; --text3: #8b949e;
+    --accent: #0969da; --accent2: #0550ae; --green: #1a7f37; --green2: #1a7f37;
+    --blue: #0969da; --gold: #9a6700; --teal: #1b7c83;
+    --border: #d0d7de; --red: #cf222e; --orange: #bc4c00;
+    --purple: #8250df; --pink: #bf3989;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
+  }
+  .container { max-width: 800px; margin: 0 auto; padding: 16px; }
 
-    :root {
-      --bg-dark: #0a0f0a;
-      --bg-card: #111a11;
-      --bg-card-hover: #162016;
-      --bg-surface: #0d140d;
-      --emerald: #10b981;
-      --emerald-dim: #059669;
-      --emerald-glow: rgba(16, 185, 129, 0.15);
-      --emerald-glow-strong: rgba(16, 185, 129, 0.3);
-      --gold: #d4a843;
-      --gold-dim: #b8922e;
-      --gold-glow: rgba(212, 168, 67, 0.15);
-      --text-primary: #f0f4f0;
-      --text-secondary: #9ca89c;
-      --text-muted: #5c6b5c;
-      --border: #1a2e1a;
-      --border-light: #243524;
-      --red: #ef4444;
-      --red-dim: rgba(239, 68, 68, 0.15);
-      --yellow: #eab308;
-      --yellow-dim: rgba(234, 179, 8, 0.15);
-      --font-heading: 'DM Serif Display', Georgia, serif;
-      --font-body: 'DM Sans', system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-    }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  h1 { font-size: 18px; font-weight: 700; white-space: nowrap; }
+  .header-btns { display: flex; gap: 4px; flex-shrink: 0; }
+  .hdr-btn {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--accent); padding: 6px 10px; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .hdr-btn:active { background: var(--accent2); color: #fff; }
+  .hdr-btn.icon-only { padding: 6px 8px; }
+  .hdr-btn.import-btn { border-color: var(--accent); }
+  .subtitle { font-size: 11px; color: var(--text3); margin-bottom: 12px; }
 
-    html {
-      scroll-behavior: smooth;
-      font-size: 16px;
-    }
+  .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
+  .filter-group { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+  .filter-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-right: 2px; }
+  .filter-btn { padding: 5px 10px; font-size: 11px; font-weight: 600; border-radius: 8px;
+    background: var(--bg3); color: var(--text3); border: 1px solid var(--border); cursor: pointer; }
+  .filter-btn.active { background: var(--accent2); color: #fff; border-color: var(--accent); }
+  .filter-select {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text2); padding: 5px 8px; font-size: 11px; font-weight: 600;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+  .filter-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
 
-    body {
-      font-family: var(--font-body);
-      background: var(--bg-dark);
-      color: var(--text-primary);
-      line-height: 1.6;
-      overflow-x: hidden;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; border-top: 2px solid var(--border); }
+  .kpi:nth-child(1) { border-top-color: var(--green); }
+  .kpi:nth-child(2) { border-top-color: var(--blue); }
+  .kpi:nth-child(3) { border-top-color: var(--gold); }
+  .kpi:nth-child(4) { border-top-color: var(--teal); }
+  .kpi:nth-child(5) { border-top-color: var(--purple); }
+  .kpi:nth-child(6) { border-top-color: var(--pink); }
+  .kpi-value { font-size: 22px; font-weight: 700; color: var(--green); font-variant-numeric: tabular-nums; }
+  .kpi-label { font-size: 10px; color: var(--text3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
 
-    /* ============================================
-       SCROLL ANIMATIONS
-       ============================================ */
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(40px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to   { opacity: 1; }
-    }
-    @keyframes slideInLeft {
-      from { opacity: 0; transform: translateX(-40px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes slideInRight {
-      from { opacity: 0; transform: translateX(40px); }
-      to   { opacity: 1; transform: translateX(0); }
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-    @keyframes shimmer {
-      0% { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-    @keyframes drawLine {
-      from { stroke-dashoffset: 600; }
-      to   { stroke-dashoffset: 0; }
-    }
+  .tabs { display: flex; gap: 4px; margin-bottom: 16px; background: var(--bg2); border-radius: 10px; padding: 3px; overflow-x: auto; }
+  .tab { flex: 1; padding: 8px 6px; text-align: center; font-size: 11px; font-weight: 600; border-radius: 8px;
+    background: transparent; color: var(--text3); border: none; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .tab.active { background: var(--bg3); color: var(--blue); }
 
-    .reveal {
-      opacity: 0;
-      transform: translateY(40px);
-      animation: fadeInUp 0.8s ease forwards;
-      animation-play-state: paused;
-    }
-    .reveal.visible {
-      animation-play-state: running;
-    }
-    .reveal-delay-1 { animation-delay: 0.1s; }
-    .reveal-delay-2 { animation-delay: 0.2s; }
-    .reveal-delay-3 { animation-delay: 0.3s; }
-    .reveal-delay-4 { animation-delay: 0.4s; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 600; margin-bottom: 12px; color: var(--text2); }
 
-    /* ============================================
-       UTILITY
-       ============================================ */
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
+  .yardage-table { width: 100%; border-collapse: collapse; }
+  .yardage-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); }
+  .yardage-table th:first-child { text-align: left; }
+  .yardage-table td { padding: 10px 8px; text-align: right; font-variant-numeric: tabular-nums; font-size: 14px;
+    border-bottom: 1px solid var(--border); }
+  .yardage-table td:first-child { text-align: left; font-weight: 600; }
+  .yardage-table .carry-cell { font-weight: 700; color: var(--green); font-size: 16px; }
+  .yardage-table .gap-cell { color: var(--text3); font-size: 12px; }
+  .yardage-table .estimated { opacity: 0.5; font-style: italic; }
+  .est-badge { display: inline-block; font-size: 8px; background: var(--border); color: var(--text3);
+    padding: 1px 4px; border-radius: 3px; margin-left: 4px; vertical-align: middle; font-style: normal; }
 
-    /* ============================================
-       NAVBAR
-       ============================================ */
-    .navbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 1000;
-      background: rgba(10, 15, 10, 0.85);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-bottom: 1px solid var(--border);
-      transition: background 0.3s ease;
-    }
-    .navbar-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 72px;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 24px;
-    }
-    .navbar-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      text-decoration: none;
-      color: var(--text-primary);
-    }
-    .navbar-brand svg {
-      width: 32px; height: 32px;
-    }
-    .navbar-brand span {
-      font-family: var(--font-heading);
-      font-size: 1.25rem;
-      letter-spacing: -0.02em;
-    }
-    .navbar-brand .brand-dot {
-      color: var(--emerald);
-    }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      list-style: none;
-    }
-    .nav-links a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: color 0.2s ease;
-      letter-spacing: 0.02em;
-    }
-    .nav-links a:hover {
-      color: var(--emerald);
-    }
-    .nav-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 8px 20px;
-      background: var(--emerald);
-      color: #000 !important;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 0.875rem;
-      transition: background 0.2s ease, transform 0.15s ease;
-    }
-    .nav-cta:hover {
-      background: var(--emerald-dim);
-      transform: translateY(-1px);
-      color: #000 !important;
-    }
+  .chart-wrap { position: relative; height: 220px; margin-top: 8px; }
 
-    /* Mobile nav toggle */
-    .nav-toggle {
-      display: none;
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 8px;
-    }
-    .nav-toggle span {
-      display: block;
-      width: 24px;
-      height: 2px;
-      background: var(--text-primary);
-      margin: 5px 0;
-      transition: all 0.3s ease;
-      border-radius: 2px;
-    }
+  .session-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .session-table th { font-size: 10px; color: var(--text3); padding: 6px 4px; text-align: right;
+    border-bottom: 1px solid var(--border); text-transform: uppercase; }
+  .session-table th:first-child { text-align: left; }
+  .session-table td { padding: 8px 4px; text-align: right; font-variant-numeric: tabular-nums;
+    border-bottom: 1px solid var(--border); }
+  .session-table td:first-child { text-align: left; color: var(--text2); }
 
-    @media (max-width: 768px) {
-      .nav-toggle { display: block; }
-      .nav-links {
-        position: fixed;
-        top: 72px; left: 0; right: 0;
-        background: rgba(10, 15, 10, 0.97);
-        backdrop-filter: blur(20px);
-        flex-direction: column;
-        padding: 32px 24px;
-        gap: 24px;
-        border-bottom: 1px solid var(--border);
-        transform: translateY(-120%);
-        transition: transform 0.3s ease;
-      }
-      .nav-links.open { transform: translateY(0); }
-      .nav-links a { font-size: 1rem; }
-    }
+  .section-hidden { display: none; }
 
-    /* ============================================
-       HERO
-       ============================================ */
-    .hero {
-      position: relative;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      overflow: hidden;
-    }
-    .hero::before {
-      content: '';
-      position: absolute;
-      top: -20%; left: 50%;
-      transform: translateX(-50%);
-      width: 800px; height: 800px;
-      background: radial-gradient(circle, var(--emerald-glow) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 200px;
-      background: linear-gradient(to bottom, transparent, var(--bg-dark));
-      pointer-events: none;
-    }
-    .hero-content {
-      position: relative;
-      z-index: 1;
-      max-width: 800px;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 16px;
-      background: var(--emerald-glow);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      border-radius: 100px;
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: var(--emerald);
-      margin-bottom: 32px;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      animation: fadeIn 0.8s ease 0.2s both;
-    }
-    .hero-badge::before {
-      content: '';
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--emerald);
-      animation: pulse 2s ease-in-out infinite;
-    }
-    .hero h1 {
-      font-family: var(--font-heading);
-      font-size: clamp(2.5rem, 7vw, 5rem);
-      line-height: 1.05;
-      letter-spacing: -0.03em;
-      margin-bottom: 24px;
-      animation: fadeInUp 0.8s ease 0.3s both;
-    }
-    .hero h1 .accent {
-      color: var(--emerald);
-    }
-    .hero-subtitle {
-      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
-      color: var(--text-secondary);
-      max-width: 560px;
-      margin: 0 auto 48px;
-      line-height: 1.6;
-      animation: fadeInUp 0.8s ease 0.5s both;
-    }
-    .hero-cta-group {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      justify-content: center;
-      animation: fadeInUp 0.8s ease 0.7s both;
-    }
-    .btn-primary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 36px;
-      background: var(--emerald);
-      color: #000;
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: all 0.2s ease;
-      border: none;
-      cursor: pointer;
-    }
-    .btn-primary:hover {
-      background: #34d399;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 32px var(--emerald-glow-strong);
-    }
-    .btn-secondary {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 16px 36px;
-      background: transparent;
-      color: var(--text-primary);
-      text-decoration: none;
-      border-radius: 12px;
-      font-weight: 500;
-      font-size: 1rem;
-      border: 1px solid var(--border-light);
-      transition: all 0.2s ease;
-    }
-    .btn-secondary:hover {
-      border-color: var(--emerald);
-      color: var(--emerald);
-      transform: translateY(-2px);
-    }
-    .hero-meta {
-      margin-top: 48px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      animation: fadeIn 1s ease 1s both;
-    }
-    .hero-meta span {
-      margin: 0 12px;
-    }
+  .trend-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+  .trend-card { flex: 1; min-width: 100px; background: var(--bg3); border-radius: 10px; padding: 10px 12px; }
+  .trend-metric { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .trend-values { display: flex; align-items: baseline; gap: 6px; margin-top: 4px; }
+  .trend-current { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .trend-delta { font-size: 12px; font-weight: 600; }
+  .trend-up { color: var(--green); }
+  .trend-down { color: var(--red); }
+  .trend-flat { color: var(--text3); }
+  .trend-context { font-size: 10px; color: var(--text3); margin-top: 2px; }
 
-    /* ============================================
-       QUOTE DIVIDERS
-       ============================================ */
-    .quote-divider {
-      padding: 80px 24px;
-      text-align: center;
-      position: relative;
-    }
-    .quote-divider::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 50%;
-      transform: translateX(-50%);
-      width: 60px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--gold), transparent);
-    }
-    .quote-divider blockquote {
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
-      color: var(--gold);
-      max-width: 640px;
-      margin: 0 auto;
-      line-height: 1.5;
-    }
-    .quote-divider cite {
-      display: block;
-      margin-top: 16px;
-      font-family: var(--font-body);
-      font-style: normal;
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
+  .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--border);
+    font-size: 10px; color: var(--text3); text-align: center; }
 
-    /* ============================================
-       SECTION HEADINGS
-       ============================================ */
-    .section {
-      padding: 100px 24px;
-      position: relative;
-    }
-    .section-eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--emerald);
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-family: var(--font-heading);
-      font-size: clamp(1.75rem, 4vw, 2.75rem);
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      margin-bottom: 16px;
-    }
-    .section-desc {
-      font-size: 1.05rem;
-      color: var(--text-secondary);
-      max-width: 560px;
-      line-height: 1.6;
-    }
-    .section-header {
-      text-align: center;
-      margin-bottom: 64px;
-    }
-    .section-header .section-desc {
-      margin: 0 auto;
-    }
+  .loading-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--bg); display: flex; align-items: center; justify-content: center;
+    font-size: 16px; color: var(--accent); z-index: 100; flex-direction: column; gap: 12px;
+  }
+  .loading-overlay.hidden { display: none; }
 
-    /* ============================================
-       FEATURES
-       ============================================ */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 24px;
-    }
-    .feature-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 36px 28px;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .feature-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, var(--emerald), var(--gold));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .feature-card:hover {
-      background: var(--bg-card-hover);
-      border-color: var(--border-light);
-      transform: translateY(-4px);
-    }
-    .feature-card:hover::before {
-      opacity: 1;
-    }
-    .feature-icon {
-      width: 48px; height: 48px;
-      background: var(--emerald-glow);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-    .feature-icon svg {
-      width: 24px; height: 24px;
-      stroke: var(--emerald);
-      fill: none;
-      stroke-width: 2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-    .feature-card h3 {
-      font-family: var(--font-heading);
-      font-size: 1.2rem;
-      margin-bottom: 8px;
-    }
-    .feature-card p {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.55;
-    }
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--bg3); border: 1px solid var(--green); border-radius: 10px;
+    padding: 10px 20px; font-size: 13px; color: var(--green); z-index: 200;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
 
-    /* ============================================
-       APP MOCKUP
-       ============================================ */
-    .mockup-section {
-      background: var(--bg-surface);
-    }
-    .mockup-wrapper {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .mockup-frame {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      box-shadow: 0 32px 64px rgba(0,0,0,0.4);
-    }
-    .mockup-titlebar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 20px;
-      background: rgba(0,0,0,0.3);
-      border-bottom: 1px solid var(--border);
-    }
-    .mockup-dot {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-    }
-    .mockup-dot.red { background: #ff5f57; }
-    .mockup-dot.yellow { background: #febc2e; }
-    .mockup-dot.green { background: #28c840; }
-    .mockup-titlebar-text {
-      flex: 1;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      letter-spacing: 0.05em;
-    }
-    .mockup-body {
-      padding: 32px;
-    }
-    .kpi-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      margin-bottom: 32px;
-    }
-    .kpi-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 20px;
-      text-align: center;
-    }
-    .kpi-label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-    }
-    .kpi-value {
-      font-family: var(--font-mono);
-      font-size: 1.8rem;
-      font-weight: 600;
-      color: var(--emerald);
-      line-height: 1.2;
-    }
-    .kpi-unit {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      font-weight: 400;
-      margin-top: 2px;
-      display: block;
-    }
-    .chart-container {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 24px;
-    }
-    .chart-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .chart-title {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-    }
-    .chart-legend {
-      display: flex;
-      gap: 16px;
-    }
-    .chart-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-    .chart-legend-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-    }
+  /* Empty state */
+  .empty-state { text-align: center; padding: 60px 20px; }
+  .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .empty-state-sub { font-size: 13px; color: var(--text3); line-height: 1.5; margin-bottom: 20px; }
+  .empty-state .import-big {
+    background: var(--green2); color: #fff; border: none; border-radius: 12px;
+    padding: 14px 28px; font-size: 15px; font-weight: 700; cursor: pointer;
+  }
 
-    @media (max-width: 640px) {
-      .kpi-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-      .kpi-card {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        text-align: left;
-      }
-      .kpi-value { font-size: 1.4rem; }
-      .mockup-body { padding: 20px; }
-    }
+  /* Manage data */
+  .manage-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0;
+    border-bottom: 1px solid var(--border); font-size: 12px; }
+  .manage-file { color: var(--text2); flex: 1; }
+  .manage-meta { color: var(--text3); font-size: 11px; margin: 0 8px; }
+  .manage-del { background: none; border: 1px solid var(--red); border-radius: 6px;
+    color: var(--red); padding: 3px 8px; font-size: 11px; cursor: pointer; }
 
-    /* ============================================
-       AI COACH PREVIEW
-       ============================================ */
-    .ai-coach-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    @media (max-width: 768px) {
-      .ai-coach-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-    .ai-panel {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-    }
-    .ai-panel-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--text-muted);
-    }
-    .ai-panel-header svg {
-      width: 16px; height: 16px;
-      stroke: var(--emerald);
-      fill: none;
-      stroke-width: 2;
-    }
-    .ai-panel-body {
-      padding: 20px;
-    }
-    .diagnosis-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: var(--bg-surface);
-      border-radius: 10px;
-      margin-bottom: 10px;
-      border: 1px solid var(--border);
-    }
-    .diagnosis-text {
-      font-size: 0.85rem;
-      color: var(--text-primary);
-    }
-    .diagnosis-indicator {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      flex-shrink: 0;
-      margin-left: 12px;
-    }
-    .indicator-red {
-      background: var(--red);
-      box-shadow: 0 0 8px var(--red-dim);
-    }
-    .indicator-yellow {
-      background: var(--yellow);
-      box-shadow: 0 0 8px var(--yellow-dim);
-    }
-    .insight-box {
-      background: var(--emerald-glow);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-top: 16px;
-    }
-    .insight-label {
-      font-family: var(--font-mono);
-      font-size: 0.65rem;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--emerald);
-      margin-bottom: 8px;
-    }
-    .insight-text {
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      line-height: 1.55;
-    }
-    .drill-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    .drill-video-embed {
-      width: 100%;
-      padding-bottom: 56.25%;
-      position: relative;
-      background: #000;
-    }
-    .drill-video-embed iframe {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      border: none;
-      z-index: 1;
-    }
-    .drill-info {
-      padding: 16px 20px;
-    }
-    .drill-name {
-      font-family: var(--font-heading);
-      font-size: 1rem;
-      margin-bottom: 4px;
-    }
-    .drill-author {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
+  .install-banner {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg2); border-top: 1px solid var(--border);
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    z-index: 150; animation: slideUp 0.3s ease-out;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .install-banner-icon { width: 40px; height: 40px; background: var(--bg3); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: var(--accent); flex-shrink: 0; }
+  .install-banner-text { flex: 1; }
+  .install-banner-title { font-size: 13px; font-weight: 600; }
+  .install-banner-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .install-banner-close { background: none; border: none; color: var(--text3); font-size: 18px; cursor: pointer; padding: 4px 8px; }
 
-    /* ============================================
-       PRICING
-       ============================================ */
-    .pricing-section {
-      background: var(--bg-surface);
-    }
-    .pricing-card {
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 48px 40px;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-    }
-    .pricing-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--emerald), var(--gold), var(--emerald));
-      background-size: 200% 100%;
-      animation: shimmer 3s linear infinite;
-    }
-    .pricing-plan-name {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.15em;
-      color: var(--emerald);
-      margin-bottom: 24px;
-    }
-    .pricing-amount {
-      display: flex;
-      align-items: baseline;
-      justify-content: center;
-      gap: 4px;
-      margin-bottom: 4px;
-    }
-    .pricing-dollar {
-      font-family: var(--font-heading);
-      font-size: 3.5rem;
-      line-height: 1;
-      letter-spacing: -0.03em;
-    }
-    .pricing-period {
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-    }
-    .pricing-then {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      margin-bottom: 36px;
-    }
-    .pricing-features {
-      list-style: none;
-      text-align: left;
-      margin-bottom: 36px;
-    }
-    .pricing-features li {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 10px 0;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      border-bottom: 1px solid var(--border);
-    }
-    .pricing-features li:last-child {
-      border-bottom: none;
-    }
-    .pricing-features svg {
-      width: 18px; height: 18px;
-      stroke: var(--emerald);
-      fill: none;
-      stroke-width: 2;
-      flex-shrink: 0;
-    }
-    .pricing-cta {
-      width: 100%;
-      padding: 16px;
-      font-size: 1rem;
-    }
-    .pricing-note {
-      margin-top: 20px;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      font-style: italic;
-    }
+  /* Profile */
+  .profile-tiles { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 16px; }
+  .profile-tile {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 16px; cursor: pointer; transition: all 0.2s; text-align: center; min-width: 80px;
+  }
+  .profile-tile:hover, .profile-tile:active { border-color: var(--accent); background: var(--accent2); color: #fff; }
+  .profile-tile-name { font-size: 13px; font-weight: 600; }
+  .profile-tile-user { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .profile-tile:hover .profile-tile-user, .profile-tile:active .profile-tile-user { color: rgba(255,255,255,0.7); }
+  .profile-avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent2); color: #fff;
+    font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0;
+  }
+  .profile-menu {
+    position: absolute; top: 42px; right: 0; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 6px 0; min-width: 160px; z-index: 60; box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+  .profile-menu.hidden { display: none; }
+  .profile-menu-item {
+    padding: 8px 14px; font-size: 12px; cursor: pointer; color: var(--text); display: block; width: 100%;
+    background: none; border: none; text-align: left; font-family: inherit;
+  }
+  .profile-menu-item:hover { background: var(--bg3); }
+  .profile-menu-item.danger { color: var(--red); }
+  .profile-menu-name { font-size: 11px; color: var(--text3); padding: 6px 14px 4px; }
 
-    /* ============================================
-       FOOTER
-       ============================================ */
-    .footer {
-      padding: 64px 24px 32px;
-      border-top: 1px solid var(--border);
-    }
-    .footer-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      text-align: center;
-    }
-    .footer-tagline {
-      font-family: var(--font-heading);
-      font-style: italic;
-      font-size: 1.1rem;
-      color: var(--gold);
-      margin-bottom: 24px;
-    }
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 32px;
-      margin-bottom: 24px;
-      flex-wrap: wrap;
-    }
-    .footer-links a {
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: color 0.2s ease;
-    }
-    .footer-links a:hover {
-      color: var(--emerald);
-    }
-    .footer-copy {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-  </style>
+  .profile-section { margin-bottom: 16px; }
+  .profile-section-title { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .profile-field { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .profile-field label { font-size: 12px; color: var(--text2); min-width: 80px; flex-shrink: 0; }
+  .profile-field input, .profile-field select {
+    flex: 1; padding: 7px 10px; font-size: 13px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-family: inherit;
+  }
+  .profile-field input:focus, .profile-field select:focus { outline: none; border-color: var(--accent); }
+  .bag-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .bag-club { font-size: 12px; font-weight: 600; min-width: 70px; color: var(--text); }
+  .bag-brand { flex: 1; padding: 6px 8px; font-size: 12px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg3); color: var(--text); font-family: inherit; }
+  .bag-brand:focus { outline: none; border-color: var(--accent); }
+  .bag-del { background: none; border: none; color: var(--text3); cursor: pointer; font-size: 14px; padding: 2px 6px; }
+  .bag-del:hover { color: var(--red); }
+  .add-btn { font-size: 12px; color: var(--accent); background: none; border: 1px dashed var(--border);
+    border-radius: 8px; padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px; }
+  .add-btn:hover { border-color: var(--accent); background: var(--bg3); }
+</style>
 </head>
 <body>
+<div class="loading-overlay" id="loadingOverlay">
+  <div>Loading Swing Doctor...</div>
+</div>
+<div class="toast" id="toast"></div>
+<input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
 
-  <!-- ===================== NAVBAR ===================== -->
-  <nav class="navbar" id="navbar">
-    <div class="navbar-inner">
-      <a href="#" class="navbar-brand">
-        <img src="/App_icon.png" alt="SwingDoctor" style="width:36px;height:36px;border-radius:8px">
-        <img src="/WordArt-white.png" alt="SwingDoctor" style="height:72px">
-      </a>
-      <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">
-        <span></span><span></span><span></span>
+<div class="container">
+  <div class="header">
+    <h1>Swing Doctor</h1>
+    <div class="header-btns" style="position:relative">
+      <div class="profile-avatar" id="profileAvatar" onclick="toggleProfileMenu()" title="Profile"></div>
+      <div class="profile-menu hidden" id="profileMenu">
+        <div class="profile-menu-name" id="profileMenuName"></div>
+        <button class="profile-menu-item" onclick="switchTab('profile');closeProfileMenu()">My Profile</button>
+        <div id="profileSwitchList"></div>
+        <button class="profile-menu-item" onclick="addNewProfile()">+ Add Profile</button>
+      </div>
+      <button class="hdr-btn icon-only" onclick="toggleTheme()" title="Toggle light/dark mode" id="themeToggle">
+        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
       </button>
-      <ul class="nav-links" id="navLinks">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#ai-coach">AI Coach</a></li>
-        <li><a href="#pricing">Pricing</a></li>
-        <li><a href="/signup/" class="nav-cta" style="margin-right:4px">Sign Up</a></li>
-        <li><a href="/signup/#login" class="nav-cta" style="background:transparent;border:1px solid #fff;color:#fff">Sign In</a></li>
-      </ul>
+      <button class="hdr-btn icon-only" onclick="hardRefresh()" title="Refresh data &amp; reload">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV files">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </button>
     </div>
-  </nav>
+  </div>
+  <div class="subtitle" id="subtitle"></div>
 
-  <!-- ===================== HERO ===================== -->
-  <section class="hero" id="hero">
-    <div class="hero-content">
-      <div class="hero-badge">Now in Beta</div>
-      <h1>Stop guessing.<br /><span class="accent">Start golfing.</span></h1>
-      <p class="hero-subtitle">Bring advanced analytics and AI to your golf swing. Upload your launch monitor data, get instant coaching insights, and track your improvement.</p>
-      <div class="hero-cta-group">
-        <a href="/signup/" class="btn-primary">
-          30-Day Trial &mdash; Just $1.99
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-        </a>
-        <a href="#features" class="btn-secondary">
-          See Features
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>
-        </a>
+  <div id="mainContent" style="display:none">
+    <div class="filters" id="filtersRow">
+      <div class="filter-group" id="clubSelect"></div>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <span class="filter-label">Time</span>
+        <select class="filter-select" id="dateFilter" onchange="onDateFilterChange()"></select>
       </div>
-      <p class="hero-meta">
-        Bushnell &bull; Trackman &bull; Garmin &bull; Mevo+
-      </p>
+      <div class="filter-divider"></div>
+      <div class="filter-group">
+        <span class="filter-label">Ball</span>
+        <select class="filter-select" id="ballTypeFilter" onchange="onBallTypeFilterChange()"></select>
+      </div>
     </div>
-  </section>
 
-  <!-- ===================== QUOTE 1 ===================== -->
-  <div class="quote-divider reveal">
-    <blockquote>&ldquo;The more I practice, the luckier I get.&rdquo;</blockquote>
-    <cite>&mdash; Gary Player</cite>
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+      <button class="tab" data-tab="progress" onclick="switchTab('progress')">Progress</button>
+      <button class="tab" data-tab="yardage" onclick="switchTab('yardage')">Yardage</button>
+      <button class="tab" data-tab="dispersion" onclick="switchTab('dispersion')">Dispersion</button>
+      <button class="tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
+      <button class="tab" data-tab="coach" onclick="switchTab('coach')">AI Coach</button>
+      <button class="tab" data-tab="manage" onclick="switchTab('manage')">Data</button>
+      <button class="tab" data-tab="profile" onclick="switchTab('profile')">Profile</button>
+    </div>
+
+    <div id="tab-overview">
+      <div class="card"><div class="card-title">Session Carry Trend</div><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
+      <div class="card"><div class="card-title">Carry Distribution</div><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
+    </div>
+    <div id="tab-progress" class="section-hidden">
+      <div class="card"><div class="card-title">Are You Improving? <span style="font-size:10px;color:var(--text3)">(tap a metric to see its trend)</span></div><div class="trend-row" id="trendSummary"></div></div>
+      <div class="card"><div class="card-title" id="progressChartTitle">Carry Distance Over Time</div><div class="chart-wrap" style="height:260px"><canvas id="progressChart"></canvas></div></div>
+    </div>
+    <div id="tab-yardage" class="section-hidden">
+      <div class="card"><div class="card-title">Club Yardage Map</div><div class="chart-wrap" style="height:240px"><canvas id="yardageChart"></canvas></div></div>
+      <div class="card"><div style="overflow-x:auto"><table class="yardage-table" id="yardageTable"></table></div></div>
+    </div>
+    <div id="tab-dispersion" class="section-hidden">
+      <div class="card"><div class="card-title">Offline vs Carry</div><div class="chart-wrap" style="height:280px"><canvas id="scatterChart"></canvas></div></div>
+    </div>
+    <div id="tab-sessions" class="section-hidden">
+      <div class="card"><div class="card-title">Session History</div><div style="overflow-x:auto"><table class="session-table" id="sessionTable"></table></div></div>
+    </div>
+    <div id="tab-coach" class="section-hidden">
+      <div class="card">
+        <div class="card-title">AI Swing Coach</div>
+        <div id="coachIntro" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">
+          Get personalized coaching advice, drill recommendations, and a practice plan based on your shot data.
+          The AI analyzes your carry distances, consistency, spin rates, and miss patterns to identify exactly what to work on.
+        </div>
+        <div id="coachContext" style="margin-bottom:12px">
+          <textarea id="coachInput" placeholder="Optional: tell the coach what you're working on, what feels off, or what you want to improve..."
+            style="width:100%;padding:10px;font-size:13px;border-radius:8px;border:1px solid var(--border);
+            background:var(--bg3);color:var(--text);font-family:inherit;resize:vertical;min-height:60px"></textarea>
+        </div>
+        <button class="hdr-btn import-btn" onclick="runAICoach()" id="coachBtn" style="width:100%;justify-content:center;padding:10px">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          Analyze My Swing
+        </button>
+        <div id="coachLoading" style="display:none;text-align:center;padding:20px;color:var(--accent)">
+          <div style="margin-bottom:8px">Analyzing your data...</div>
+          <div style="font-size:11px;color:var(--text3)">This takes 10-15 seconds</div>
+        </div>
+      </div>
+      <div id="coachResults" style="display:none">
+        <div class="card">
+          <div class="card-title">Overall Assessment</div>
+          <div id="coachAssessment" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Handicap Context</div>
+          <div id="coachHandicap" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Top Priorities</div>
+          <ol id="coachPriorities" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ol>
+        </div>
+        <div class="card">
+          <div class="card-title">Club Insights</div>
+          <div id="coachClubs"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recommended Drills</div>
+          <div id="coachDrills"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Equipment Notes</div>
+          <ul id="coachEquipment" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ul>
+        </div>
+        <div class="card">
+          <div class="card-title">Next Session Plan</div>
+          <div id="coachNextSession" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+      </div>
+    </div>
+    <div id="tab-manage" class="section-hidden">
+      <div class="card">
+        <div class="card-title">Imported Sessions</div>
+        <div id="manageList"></div>
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="hdr-btn import-btn" onclick="document.getElementById('fileInput').click()" style="flex:1;justify-content:center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import Files
+          </button>
+          <button class="hdr-btn" onclick="syncFromServer()" style="flex:1;justify-content:center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+            Sync Server
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="tab-profile" class="section-hidden">
+      <div class="card">
+        <div class="card-title">Golfer Info</div>
+        <div class="profile-field"><label>Profile</label><input id="profUsername" disabled></div>
+        <div class="profile-field"><label>Golfer Name</label><input id="profGolferName" onchange="saveProfileField('golferName', this.value)"></div>
+        <div class="profile-field"><label>Launch Sim</label>
+          <select id="profLaunchSim" onchange="saveProfileField('launchSim', this.value)">
+            <option value="">Select...</option>
+            <option value="Bushnell Launch Pro">Bushnell Launch Pro</option>
+            <option value="Garmin R10">Garmin R10</option>
+            <option value="FlightScope Mevo+">FlightScope Mevo+</option>
+            <option value="SkyTrak">SkyTrak</option>
+            <option value="Trackman">Trackman</option>
+            <option value="GC3/GCQuad">GC3 / GCQuad</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">My Bag</div>
+        <div id="bagList"></div>
+        <button class="add-btn" onclick="addBagClub()">+ Add Club</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Golf Balls</div>
+        <div id="ballList"></div>
+        <button class="add-btn" onclick="addBallType()">+ Add Ball</button>
+      </div>
+      <div class="card" id="cloudAccountCard">
+        <div class="card-title">Swing Doctor Cloud</div>
+        <div id="cloudNotConnected">
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px">
+            Create a free account to unlock cloud sync, AI coaching, and access your data from any device.
+          </div>
+          <div id="cloudAuthForm">
+            <input id="cloudEmail" class="bag-brand" type="email" placeholder="Email" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudPassword" class="bag-brand" type="password" placeholder="Password (8+ chars)" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudName" class="bag-brand" placeholder="Display Name" style="width:100%;margin-bottom:8px;padding:8px 10px">
+            <div style="display:flex;gap:6px">
+              <button class="hdr-btn import-btn" onclick="cloudSignUp()" style="flex:1;justify-content:center;padding:8px">Create Account</button>
+              <button class="hdr-btn" onclick="cloudSignIn()" style="flex:1;justify-content:center;padding:8px">Sign In</button>
+            </div>
+            <div id="cloudAuthError" style="font-size:11px;color:var(--red);margin-top:6px;min-height:16px"></div>
+          </div>
+        </div>
+        <div id="cloudConnected" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+            <span style="font-size:12px;color:var(--green);font-weight:600">Connected</span>
+            <span id="cloudEmailDisplay" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
+          </div>
+          <div id="cloudTier" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="hdr-btn" onclick="cloudUpgradeOrManage()" id="cloudUpgradeBtn" style="flex:1;justify-content:center;padding:8px">Upgrade to Pro</button>
+            <button class="hdr-btn" onclick="cloudLogout()" style="justify-content:center;padding:8px;color:var(--text3)">Log Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <!-- ===================== FEATURES ===================== -->
-  <section class="section" id="features">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">Features</p>
-        <h2 class="section-title">Your data should coach you.</h2>
-        <p class="section-desc">Every shot you take generates valuable data. We turn that data into actionable insights that make you better.</p>
-      </div>
-      <div class="features-grid">
-        <!-- Smart Analytics -->
-        <div class="feature-card reveal reveal-delay-1">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
-          </div>
-          <h3>Smart Analytics</h3>
-          <p>Track every metric that matters. Carry distance, ball speed, spin rate, launch angle, and smash factor &mdash; all in one place.</p>
-        </div>
-        <!-- AI Coach -->
-        <div class="feature-card reveal reveal-delay-2">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><path d="M12 2a8 8 0 0 0-8 8c0 3.4 2.1 6.3 5 7.4V20a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-2.6c2.9-1.1 5-4 5-7.4a8 8 0 0 0-8-8z"/><path d="M10 22h4"/><path d="M9 14h1.5l1.5-3 1.5 3H15"/></svg>
-          </div>
-          <h3>AI Coach</h3>
-          <p>Personalized drill recommendations powered by AI. Get a diagnosis, understand the root cause, and follow curated drills to fix it.</p>
-        </div>
-        <!-- Club Yardage Map -->
-        <div class="feature-card reveal reveal-delay-3">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-          </div>
-          <h3>Club Yardage Map</h3>
-          <p>Know your exact distances for every club. Build a personal yardage map based on real data, not guesswork.</p>
-        </div>
-        <!-- Progress Tracking -->
-        <div class="feature-card reveal reveal-delay-4">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
-          </div>
-          <h3>Progress Tracking</h3>
-          <p>See improvement over time. Session-over-session trends, consistency metrics, and milestone tracking to keep you motivated.</p>
-        </div>
-      </div>
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="empty-state-icon">&#9971;</div>
+    <div class="empty-state-title">Stop guessing. Start improving.</div>
+    <div class="empty-state-sub">Import your launch monitor CSV files to get<br>clear diagnosis, coaching, and drills.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="import-big" onclick="syncFromServer()">Sync from Server</button>
+      <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSVs</button>
     </div>
-  </section>
-
-  <!-- ===================== QUOTE 2 ===================== -->
-  <div class="quote-divider reveal">
-    <blockquote>&ldquo;Golf is the closest game to the game we call life.&rdquo;</blockquote>
-    <cite>&mdash; Bobby Jones</cite>
   </div>
 
-  <!-- ===================== APP MOCKUP ===================== -->
-  <section class="section mockup-section" id="dashboard">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">Dashboard</p>
-        <h2 class="section-title">Everything at a glance.</h2>
-        <p class="section-desc">Session KPIs, trend analysis, and club comparisons &mdash; designed for golfers who want to get better.</p>
-      </div>
-      <div class="mockup-wrapper reveal">
-        <div class="mockup-frame">
-          <div class="mockup-titlebar">
-            <div class="mockup-dot red"></div>
-            <div class="mockup-dot yellow"></div>
-            <div class="mockup-dot green"></div>
-            <span class="mockup-titlebar-text">swing.doctor &mdash; session dashboard</span>
-          </div>
-          <div class="mockup-body">
-            <div class="kpi-row">
-              <div class="kpi-card">
-                <div>
-                  <div class="kpi-label">Avg Carry</div>
-                  <div class="kpi-value">156.2</div>
-                  <span class="kpi-unit">yards</span>
-                </div>
-              </div>
-              <div class="kpi-card">
-                <div>
-                  <div class="kpi-label">Ball Speed</div>
-                  <div class="kpi-value">107.8</div>
-                  <span class="kpi-unit">mph</span>
-                </div>
-              </div>
-              <div class="kpi-card">
-                <div>
-                  <div class="kpi-label">Smash Factor</div>
-                  <div class="kpi-value">1.43</div>
-                  <span class="kpi-unit">ratio</span>
-                </div>
-              </div>
-            </div>
-            <div class="chart-container">
-              <div class="chart-header">
-                <span class="chart-title">Carry Distance Trend</span>
-                <div class="chart-legend">
-                  <div class="chart-legend-item">
-                    <div class="chart-legend-dot" style="background: var(--emerald);"></div>
-                    7-Iron
-                  </div>
-                  <div class="chart-legend-item">
-                    <div class="chart-legend-dot" style="background: var(--gold);"></div>
-                    Driver
-                  </div>
-                </div>
-              </div>
-              <svg viewBox="0 0 600 180" width="100%" style="display:block;">
-                <!-- Grid lines -->
-                <line x1="40" y1="20" x2="40" y2="150" stroke="#1a2e1a" stroke-width="1"/>
-                <line x1="40" y1="150" x2="580" y2="150" stroke="#1a2e1a" stroke-width="1"/>
-                <line x1="40" y1="85" x2="580" y2="85" stroke="#1a2e1a" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="40" y1="52" x2="580" y2="52" stroke="#1a2e1a" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <line x1="40" y1="118" x2="580" y2="118" stroke="#1a2e1a" stroke-width="0.5" stroke-dasharray="4,4"/>
-                <!-- Y axis labels -->
-                <text x="32" y="24" fill="#5c6b5c" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">280</text>
-                <text x="32" y="56" fill="#5c6b5c" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">240</text>
-                <text x="32" y="89" fill="#5c6b5c" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">200</text>
-                <text x="32" y="122" fill="#5c6b5c" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">160</text>
-                <text x="32" y="154" fill="#5c6b5c" font-size="9" text-anchor="end" font-family="JetBrains Mono, monospace">120</text>
-                <!-- X axis labels -->
-                <text x="82" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">Jan</text>
-                <text x="172" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">Feb</text>
-                <text x="262" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">Mar</text>
-                <text x="352" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">Apr</text>
-                <text x="442" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">May</text>
-                <text x="532" y="167" fill="#5c6b5c" font-size="9" text-anchor="middle" font-family="JetBrains Mono, monospace">Jun</text>
-                <!-- 7-Iron line (emerald) ~ 145-160 range -->
-                <polyline
-                  points="82,126 172,122 262,119 352,116 442,113 532,110"
-                  fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                  style="stroke-dasharray: 600; stroke-dashoffset: 600; animation: drawLine 2s ease 0.5s forwards;"
-                />
-                <!-- Emerald area fill -->
-                <polygon
-                  points="82,126 172,122 262,119 352,116 442,113 532,110 532,150 82,150"
-                  fill="url(#emeraldGrad)" opacity="0.3"
-                />
-                <!-- Driver line (gold) ~ 230-260 range -->
-                <polyline
-                  points="82,58 172,52 262,48 352,42 442,38 532,32"
-                  fill="none" stroke="#d4a843" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
-                  style="stroke-dasharray: 600; stroke-dashoffset: 600; animation: drawLine 2s ease 0.8s forwards;"
-                />
-                <!-- Gold area fill -->
-                <polygon
-                  points="82,58 172,52 262,48 352,42 442,38 532,32 532,150 82,150"
-                  fill="url(#goldGrad)" opacity="0.15"
-                />
-                <!-- Data points - 7 iron -->
-                <circle cx="82" cy="126" r="4" fill="#0a0f0a" stroke="#10b981" stroke-width="2"/>
-                <circle cx="172" cy="122" r="4" fill="#0a0f0a" stroke="#10b981" stroke-width="2"/>
-                <circle cx="262" cy="119" r="4" fill="#0a0f0a" stroke="#10b981" stroke-width="2"/>
-                <circle cx="352" cy="116" r="4" fill="#0a0f0a" stroke="#10b981" stroke-width="2"/>
-                <circle cx="442" cy="113" r="4" fill="#0a0f0a" stroke="#10b981" stroke-width="2"/>
-                <circle cx="532" cy="110" r="4" fill="#10b981" stroke="#10b981" stroke-width="2"/>
-                <!-- Data points - driver -->
-                <circle cx="82" cy="58" r="4" fill="#0a0f0a" stroke="#d4a843" stroke-width="2"/>
-                <circle cx="172" cy="52" r="4" fill="#0a0f0a" stroke="#d4a843" stroke-width="2"/>
-                <circle cx="262" cy="48" r="4" fill="#0a0f0a" stroke="#d4a843" stroke-width="2"/>
-                <circle cx="352" cy="42" r="4" fill="#0a0f0a" stroke="#d4a843" stroke-width="2"/>
-                <circle cx="442" cy="38" r="4" fill="#0a0f0a" stroke="#d4a843" stroke-width="2"/>
-                <circle cx="532" cy="32" r="4" fill="#d4a843" stroke="#d4a843" stroke-width="2"/>
-                <!-- Gradients -->
-                <defs>
-                  <linearGradient id="emeraldGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#10b981" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-                  </linearGradient>
-                  <linearGradient id="goldGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="#d4a843" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#d4a843" stop-opacity="0"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+  <div class="footer">Swing Doctor &middot; Your data should coach you.</div>
+</div>
 
-  <!-- ===================== QUOTE 3 ===================== -->
-  <div class="quote-divider reveal">
-    <blockquote>&ldquo;It is nothing new or original to say that golf is played one stroke at a time.&rdquo;</blockquote>
-    <cite>&mdash; Bobby Jones</cite>
-  </div>
+<script>
+// ═══════════════════════════════════════════════
+// Swing Doctor — Golf sim performance dashboard
+// Local-first with optional cloud sync via API
+// ═══════════════════════════════════════════════
 
-  <!-- ===================== AI COACH PREVIEW ===================== -->
-  <section class="section" id="ai-coach">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">AI Coach</p>
-        <h2 class="section-title">Diagnosis. Insight. Drill.</h2>
-        <p class="section-desc">Your personal swing doctor analyzes your data, identifies patterns, and prescribes exactly what to work on next.</p>
-      </div>
-      <div class="ai-coach-grid">
-        <!-- Left panel: Diagnosis + Insight -->
-        <div class="ai-panel reveal reveal-delay-1">
-          <div class="ai-panel-header">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-            Diagnosis
-          </div>
-          <div class="ai-panel-body">
-            <div class="diagnosis-row">
-              <span class="diagnosis-text">Face closing through impact</span>
-              <div class="diagnosis-indicator indicator-red"></div>
-            </div>
-            <div class="diagnosis-row">
-              <span class="diagnosis-text">Launch angle too low</span>
-              <div class="diagnosis-indicator indicator-yellow"></div>
-            </div>
-            <div class="insight-box">
-              <div class="insight-label">AI Insight</div>
-              <p class="insight-text">Your 7-iron face is closing 3.2&deg; through impact, leading to a consistent low-left miss pattern. This is costing you approximately 8 yards of carry and reducing accuracy.</p>
-            </div>
-          </div>
-        </div>
-        <!-- Right panel: Drill -->
-        <div class="ai-panel reveal reveal-delay-2">
-          <div class="ai-panel-header">
-            <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            Recommended Drill
-          </div>
-          <div class="ai-panel-body" style="padding: 0;">
-            <div class="drill-card">
-              <div class="drill-video-embed">
-                <iframe src="https://www.youtube.com/embed/T6gqADpWoFI" title="Use This Incredible Drill To Master Your Golf Swing — Danny Maude" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen loading="lazy"></iframe>
-              </div>
-              <div class="drill-info">
-                <div class="drill-name">Reverse Engineer Drill</div>
-                <div class="drill-author">Danny Maude &bull; 12 min</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+// ─── API Client ───
+// Provides cloud sync when backend is available.
+// Falls back gracefully to local-only mode.
+const API = {
+  BASE: 'https://api.swing.doctor/api/v1',
+  token: null,
+  refreshToken: null,
+  enabled: false, // set true once user logs in to cloud
 
-  <!-- ===================== QUOTE 4 ===================== -->
-  <div class="quote-divider reveal">
-    <blockquote>&ldquo;Golf is deceptively simple and endlessly complicated.&rdquo;</blockquote>
-    <cite>&mdash; Arnold Palmer</cite>
-  </div>
+  init() {
+    this.token = localStorage.getItem('sd-api-token');
+    this.refreshToken = localStorage.getItem('sd-api-refresh');
+    this.enabled = !!this.token;
+  },
 
-  <!-- ===================== PRICING ===================== -->
-  <section class="section pricing-section" id="pricing">
-    <div class="container">
-      <div class="section-header reveal">
-        <p class="section-eyebrow">Pricing</p>
-        <h2 class="section-title">One plan. Everything included.</h2>
-        <p class="section-desc">No tiers. No feature gating. Just the full platform from day one.</p>
-      </div>
-      <div class="reveal">
-        <div class="pricing-card">
-          <div class="pricing-plan-name">Full Access</div>
-          <div class="pricing-amount">
-            <span class="pricing-dollar">$1.99</span>
-          </div>
-          <div class="pricing-period">for 30 days</div>
-          <div class="pricing-then">Then $19/mo &bull; Cancel anytime</div>
-          <ul class="pricing-features">
-            <li>
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Unlimited session uploads
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              AI coaching &amp; drill recommendations
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              All launch monitors supported
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Progress tracking &amp; trends
-            </li>
-            <li>
-              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-              Club yardage mapping
-            </li>
-          </ul>
-          <a href="/signup/" class="btn-primary pricing-cta">Start Your 30-Day Trial</a>
-          <p class="pricing-note">30 days full access for $1.99 &bull; Then $19/mo &bull; Cancel anytime</p>
-        </div>
-      </div>
-    </div>
-  </section>
+  setTokens(access, refresh) {
+    this.token = access;
+    this.refreshToken = refresh;
+    this.enabled = true;
+    localStorage.setItem('sd-api-token', access);
+    localStorage.setItem('sd-api-refresh', refresh);
+  },
 
-  <!-- ===================== FOOTER ===================== -->
-  <footer class="footer">
-    <div class="footer-inner">
-      <p class="footer-tagline">&ldquo;Every shot tells a story.&rdquo;</p>
-      <div class="footer-links">
-        <a href="#features">Features</a>
-        <a href="#ai-coach">AI Coach</a>
-        <a href="#pricing">Pricing</a>
-        <a href="/signup/">Sign Up</a>
-        <a href="/signup/#login">Sign In</a>
-      </div>
-      <p class="footer-copy">&copy; 2026 SwingDoctor. All rights reserved.</p>
-    </div>
-  </footer>
+  clearTokens() {
+    this.token = null;
+    this.refreshToken = null;
+    this.enabled = false;
+    localStorage.removeItem('sd-api-token');
+    localStorage.removeItem('sd-api-refresh');
+    localStorage.removeItem('sd-api-profile-id');
+  },
 
-  <!-- ===================== JAVASCRIPT ===================== -->
-  <script>
-    // Mobile nav toggle
-    const toggle = document.getElementById('navToggle');
-    const links = document.getElementById('navLinks');
-    toggle.addEventListener('click', () => {
-      links.classList.toggle('open');
-    });
-    // Close mobile nav on link click
-    links.querySelectorAll('a').forEach(a => {
-      a.addEventListener('click', () => links.classList.remove('open'));
-    });
+  getProfileId() { return localStorage.getItem('sd-api-profile-id'); },
+  setProfileId(id) { localStorage.setItem('sd-api-profile-id', id); },
 
-    // Scroll reveal with IntersectionObserver
-    const reveals = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-    reveals.forEach(el => observer.observe(el));
+  async _fetch(path, opts = {}) {
+    const headers = { ...(opts.headers || {}) };
+    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
 
-    // Navbar background on scroll
-    const navbar = document.getElementById('navbar');
-    window.addEventListener('scroll', () => {
-      if (window.scrollY > 50) {
-        navbar.style.background = 'rgba(10, 15, 10, 0.95)';
-      } else {
-        navbar.style.background = 'rgba(10, 15, 10, 0.85)';
+    const res = await fetch(`${this.BASE}${path}`, { ...opts, headers });
+
+    // Token expired — try refresh
+    if (res.status === 401 && this.refreshToken) {
+      const refreshed = await this._tryRefresh();
+      if (refreshed) {
+        headers['Authorization'] = `Bearer ${this.token}`;
+        return fetch(`${this.BASE}${path}`, { ...opts, headers });
       }
+      this.clearTokens();
+    }
+
+    return res;
+  },
+
+  async _tryRefresh() {
+    try {
+      const res = await fetch(`${this.BASE}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: this.refreshToken }),
+      });
+      if (!res.ok) return false;
+      const data = await res.json();
+      this.setTokens(data.access_token, data.refresh_token);
+      return true;
+    } catch { return false; }
+  },
+
+  // ── Auth ──
+  async register(email, password, displayName) {
+    const res = await fetch(`${this.BASE}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, display_name: displayName }),
     });
-  </script>
+    if (!res.ok) throw new Error((await res.json()).detail || 'Registration failed');
+    const data = await res.json();
+    this.setTokens(data.access_token, data.refresh_token);
+    // Fetch profiles to get profile ID
+    await this._loadProfile();
+    return data;
+  },
+
+  async login(email, password) {
+    const res = await fetch(`${this.BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Login failed');
+    const data = await res.json();
+    this.setTokens(data.access_token, data.refresh_token);
+    await this._loadProfile();
+    return data;
+  },
+
+  async _loadProfile() {
+    const res = await this._fetch('/profiles');
+    if (res.ok) {
+      const profiles = await res.json();
+      if (profiles.length) this.setProfileId(profiles[0].id);
+    }
+  },
+
+  // ── Sessions ──
+  async uploadSession(file) {
+    const pid = this.getProfileId();
+    if (!pid) throw new Error('No profile');
+    const form = new FormData();
+    form.append('file', file);
+    const res = await this._fetch(`/sessions/upload?profile_id=${pid}`, {
+      method: 'POST',
+      body: form,
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
+    return res.json();
+  },
+
+  async getSessions(params = {}) {
+    const pid = this.getProfileId();
+    if (!pid) return { sessions: [], has_more: false };
+    const qs = new URLSearchParams({ profile_id: pid, ...params });
+    const res = await this._fetch(`/sessions?${qs}`);
+    if (!res.ok) return { sessions: [], has_more: false };
+    return res.json();
+  },
+
+  // ── Analytics ──
+  async getAnalytics(params = {}) {
+    const pid = this.getProfileId();
+    if (!pid) return null;
+    const qs = new URLSearchParams(params);
+    const res = await this._fetch(`/analytics/profiles/${pid}/summary?${qs}`);
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  async getHandicap() {
+    const pid = this.getProfileId();
+    if (!pid) return null;
+    const res = await this._fetch(`/analytics/profiles/${pid}/handicap`);
+    if (!res.ok) return null;
+    return res.json();
+  },
+
+  // ── AI Analysis ──
+  async getAIAnalysis(additionalContext = null) {
+    const pid = this.getProfileId();
+    if (!pid) throw new Error('No profile');
+    const body = additionalContext ? { additional_context: additionalContext } : {};
+    const res = await this._fetch(`/ai/profiles/${pid}/analyze`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.detail || 'AI analysis failed');
+    }
+    return res.json();
+  },
+
+  // ── Billing ──
+  async getSubscriptionStatus() {
+    const res = await this._fetch('/billing/status');
+    if (!res.ok) return { tier: 'free', is_active: false };
+    return res.json();
+  },
+
+  async createCheckout(priceId) {
+    const res = await this._fetch('/billing/checkout', {
+      method: 'POST',
+      body: JSON.stringify({
+        price_id: priceId,
+        success_url: window.location.origin + '?billing=success',
+        cancel_url: window.location.origin + '?billing=cancel',
+      }),
+    });
+    if (!res.ok) throw new Error('Checkout failed');
+    const data = await res.json();
+    window.location.href = data.checkout_url;
+  },
+
+  async openBillingPortal() {
+    const res = await this._fetch('/billing/portal', {
+      method: 'POST',
+      body: JSON.stringify({ return_url: window.location.origin }),
+    });
+    if (!res.ok) throw new Error('Portal failed');
+    const data = await res.json();
+    window.location.href = data.portal_url;
+  },
+};
+
+API.init();
+
+const ELEVATION = 900;
+const DB_VERSION = 1;
+const STORE = 'sessions'; // stores {filename, date, content, importedAt}
+
+// ─── Profile Management ───
+function getProfiles() { return JSON.parse(localStorage.getItem('g730-profiles') || '{}'); }
+function saveProfiles(p) { localStorage.setItem('g730-profiles', JSON.stringify(p)); }
+function getActiveUser() { return localStorage.getItem('g730-active-user') || ''; }
+function setActiveUser(u) { localStorage.setItem('g730-active-user', u); }
+function getDBName() { const u = getActiveUser(); return u ? `g730_${u}` : 'g730'; }
+
+// Namespaced localStorage helpers (per-profile keys)
+function lsKey(base) { const u = getActiveUser(); return u ? `g730-${u}-${base}` : `g730-${base}`; }
+function lsGet(base, fallback) { return localStorage.getItem(lsKey(base)) || fallback || '{}'; }
+function lsSet(base, value) { localStorage.setItem(lsKey(base), value); }
+
+function createProfile(id, golferName) {
+  const profiles = getProfiles();
+  if (profiles[id]) return profiles[id];
+  profiles[id] = {
+    username: id, golferName,
+    createdAt: new Date().toISOString(),
+    profile: { launchSim: '', balls: ['tp5x'], bag: [] }
+  };
+  saveProfiles(profiles);
+  return profiles[id];
+}
+
+function addNewProfile() {
+  closeProfileMenu();
+  const name = prompt('Golfer name:');
+  if (!name || !name.trim()) return;
+  const id = name.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+  if (getProfiles()[id]) { showToast('Profile already exists'); return; }
+  createProfile(id, name.trim());
+  switchToProfile(id);
+}
+
+async function switchToProfile(id) {
+  closeProfileMenu();
+  setActiveUser(id);
+  DATA = null;
+  updateProfileUI();
+  renderProfileSwitchList();
+  await rebuildData();
+}
+
+function renderProfileSwitchList() {
+  const profiles = getProfiles();
+  const active = getActiveUser();
+  const others = Object.keys(profiles).filter(u => u !== active);
+  const el = document.getElementById('profileSwitchList');
+  if (!others.length) { el.innerHTML = ''; return; }
+  el.innerHTML = others.map(u => {
+    const p = profiles[u];
+    return `<button class="profile-menu-item" onclick="switchToProfile('${u}')" style="color:var(--text2)">
+      ↳ ${p.golferName || u}
+    </button>`;
+  }).join('');
+}
+
+function toggleProfileMenu() {
+  document.getElementById('profileMenu').classList.toggle('hidden');
+}
+function closeProfileMenu() {
+  document.getElementById('profileMenu').classList.add('hidden');
+}
+// Close profile menu when clicking elsewhere
+document.addEventListener('click', e => {
+  if (!e.target.closest('#profileAvatar') && !e.target.closest('#profileMenu')) closeProfileMenu();
+});
+
+function updateProfileUI() {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  const p = profiles[u];
+  if (!p) return;
+  const initials = (p.golferName || u).split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileMenuName').textContent = p.golferName || u;
+}
+
+// ─── Profile Tab ───
+function updateProfileTab() {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  const p = profiles[u];
+  if (!p) return;
+
+  document.getElementById('profUsername').value = u;
+  document.getElementById('profGolferName').value = p.golferName || '';
+  document.getElementById('profLaunchSim').value = p.profile?.launchSim || '';
+
+  // Bag
+  const bag = p.profile?.bag || [];
+  document.getElementById('bagList').innerHTML = bag.length ? bag.map((b, i) =>
+    `<div class="bag-row">
+      <span class="bag-club">${b.club}</span>
+      <input class="bag-brand" value="${b.brand || ''}" placeholder="Brand / Model" onchange="updateBagBrand(${i}, this.value)">
+      <button class="bag-del" onclick="removeBagClub(${i})" title="Remove">&times;</button>
+    </div>`
+  ).join('') : '<div style="font-size:12px;color:var(--text3);padding:4px 0">No clubs added yet</div>';
+
+  // Balls
+  const balls = p.profile?.balls || [];
+  document.getElementById('ballList').innerHTML = balls.length ? balls.map((b, i) =>
+    `<div class="bag-row">
+      <span class="bag-club" style="min-width:auto">${b}</span>
+      <span style="flex:1"></span>
+      <button class="bag-del" onclick="removeProfileBall(${i})" title="Remove">&times;</button>
+    </div>`
+  ).join('') : '<div style="font-size:12px;color:var(--text3);padding:4px 0">No balls added yet</div>';
+}
+
+function saveProfileField(field, value) {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (!profiles[u]) return;
+  if (field === 'golferName') {
+    profiles[u].golferName = value;
+  } else {
+    if (!profiles[u].profile) profiles[u].profile = {};
+    profiles[u].profile[field] = value;
+  }
+  saveProfiles(profiles);
+  updateProfileUI();
+}
+
+function addBagClub() {
+  const club = prompt('Club name (e.g. Driver, 7 Iron, PW):');
+  if (!club || !club.trim()) return;
+  const brand = prompt('Brand / Model (optional):') || '';
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (!profiles[u].profile) profiles[u].profile = {};
+  if (!profiles[u].profile.bag) profiles[u].profile.bag = [];
+  profiles[u].profile.bag.push({ club: club.trim(), brand: brand.trim() });
+  saveProfiles(profiles);
+  updateProfileTab();
+}
+
+function updateBagBrand(idx, value) {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (profiles[u]?.profile?.bag?.[idx]) {
+    profiles[u].profile.bag[idx].brand = value;
+    saveProfiles(profiles);
+  }
+}
+
+function removeBagClub(idx) {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (profiles[u]?.profile?.bag) {
+    profiles[u].profile.bag.splice(idx, 1);
+    saveProfiles(profiles);
+    updateProfileTab();
+  }
+}
+
+function addBallType() {
+  const ball = prompt('Ball type (e.g. TaylorMade TP5x):');
+  if (!ball || !ball.trim()) return;
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (!profiles[u].profile) profiles[u].profile = {};
+  if (!profiles[u].profile.balls) profiles[u].profile.balls = [];
+  profiles[u].profile.balls.push(ball.trim());
+  saveProfiles(profiles);
+  updateProfileTab();
+}
+
+function removeProfileBall(idx) {
+  const u = getActiveUser();
+  const profiles = getProfiles();
+  if (profiles[u]?.profile?.balls) {
+    profiles[u].profile.balls.splice(idx, 1);
+    saveProfiles(profiles);
+    updateProfileTab();
+  }
+}
+function cv(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+Object.defineProperties(window, {
+  GREEN:  { get() { return cv('--green'); } },
+  ACCENT: { get() { return cv('--accent'); } },
+  ACCENT2:{ get() { return cv('--accent2'); } },
+  BLUE:   { get() { return cv('--blue'); } },
+  GOLD:   { get() { return cv('--gold'); } },
+  RED:    { get() { return cv('--red'); } },
+  ORANGE: { get() { return cv('--orange'); } },
+  TEAL:   { get() { return cv('--teal'); } },
+  PURPLE: { get() { return cv('--purple'); } },
+  PINK:   { get() { return cv('--pink'); } },
+  TEXT2:  { get() { return cv('--text2'); } },
+  TEXT3:  { get() { return cv('--text3'); } },
+  BORDER: { get() { return cv('--border'); } },
+});
+const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','coach','manage','profile'];
+
+let DATA = null;
+let selectedClub = null;
+let dateFilterMode = 'all';
+let ballTypeFilter = 'all'; // 'all', 'tp5x', 'various', etc.
+const charts = {};
+
+// Ball type defaults by date — editable per session
+// Key: date string, Value: ball type string
+const BALL_TYPE_DEFAULTS = {
+  '03-18-2026': 'various',
+};
+const DEFAULT_BALL_TYPE = 'tp5x';
+
+// ─── IndexedDB ───
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(getDBName(), DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: 'filename' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveSession(filename, content) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).put({ filename, content, importedAt: new Date().toISOString() });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getAllSessions() {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function deleteSession(filename) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(filename);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+// ─── File Import ───
+async function handleFileImport(event) {
+  const files = event.target.files;
+  if (!files.length) return;
+  let imported = 0;
+  for (const file of files) {
+    const content = await file.text();
+    await saveSession(file.name, content);
+    imported++;
+    // Cloud sync: upload to API in background if connected
+    if (API.enabled) {
+      API.uploadSession(file).catch(e => {
+        console.warn('Cloud upload failed (saved locally):', e.message);
+      });
+    }
+  }
+  event.target.value = '';
+  const cloudMsg = API.enabled ? ' (synced to cloud)' : '';
+  showToast(`Imported ${imported} file${imported > 1 ? 's' : ''}${cloudMsg}`);
+  await rebuildData();
+}
+
+// ─── CSV Parsing (ported from server.py) ───
+
+function parsePrefixDir(val, leftNeg = true) {
+  if (!val || !String(val).trim()) return null;
+  val = String(val).trim();
+  if (val.startsWith('L')) return (leftNeg ? -1 : 1) * parseFloat(val.slice(1));
+  if (val.startsWith('R')) return (leftNeg ? 1 : -1) * parseFloat(val.slice(1));
+  const n = parseFloat(val);
+  return isNaN(n) ? null : n;
+}
+
+function parseSuffixDir(val, leftNeg = true) {
+  if (!val || !String(val).trim()) return null;
+  val = String(val).trim();
+  const parts = val.split(/\s+/);
+  if (parts.length < 2) { const n = parseFloat(val); return isNaN(n) ? null : n; }
+  const n = parseFloat(parts[0]);
+  if (isNaN(n)) return null;
+  const d = parts[1];
+  if ('L DN O-I'.includes(d)) return (leftNeg ? -1 : 1) * n;
+  if ('R UP I-O'.includes(d)) return (leftNeg ? 1 : -1) * n;
+  return n;
+}
+
+function num(v) { if (v == null) return null; const n = parseFloat(String(v).trim()); return isNaN(n) ? null : n; }
+
+const CLUB_MAP = {'3h':'3 Hybrid','4h':'4 Hybrid','5h':'5 Hybrid','3i':'3 Iron','4i':'4 Iron',
+  '5i':'5 Iron','6i':'6 Iron','7i':'7 Iron','8i':'8 Iron','9i':'9 Iron',
+  'pw':'PW','sw':'SW','gw':'GW','lw':'LW','dr':'Driver','3w':'3 Wood','5w':'5 Wood'};
+
+function normalizeClub(raw) {
+  if (!raw) return raw;
+  raw = raw.trim();
+  return CLUB_MAP[raw.toLowerCase()] || raw;
+}
+
+function parseDrivingRangeCSV(content, filename) {
+  const lines = content.split('\n').map(l => l.trim()).filter(l => l);
+  if (lines.length < 3) return [];
+  const meta = lines[0].split(',');
+  const fileDate = meta[1] ? meta[1].trim() : null;
+  let headerIdx = -1;
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    if (lines[i].startsWith('Club,Index,')) { headerIdx = i; break; }
+  }
+  if (headerIdx < 0) return [];
+  const shots = [];
+  for (let i = headerIdx + 1; i < lines.length; i++) {
+    const c = lines[i].split(',');
+    if (c.length < 16) continue;
+    if (!c[0].trim() || c[0].trim() === 'Average' || c[0].trim() === 'Deviation') continue;
+    shots.push({
+      source: filename, date: fileDate, club: normalizeClub(c[0]), index: parseInt(c[1]) || 0,
+      ballSpeed: num(c[2]), launchDirection: parsePrefixDir(c[3]), launchAngle: num(c[4]),
+      spinRate: num(c[5]), spinAxis: parsePrefixDir(c[6], false), backSpin: num(c[7]),
+      sideSpin: parsePrefixDir(c[8]), apex: num(c[9]), carry: num(c[10]), total: null, // CSV totals are unreliable; computed as carry*1.08
+      offline: parsePrefixDir(c[12]), landingAngle: num(c[13]), clubPath: parsePrefixDir(c[14]),
+      faceAngle: parsePrefixDir(c[15]), attackAngle: num(c[16]), dynamicLoft: num(c[17]),
+      clubSpeed: null, smashFactor: null,
+    });
+  }
+  return shots;
+}
+
+function parseShotAnalysisCSV(content, filename) {
+  const lines = content.split('\n');
+  const shots = [];
+  let currentClub = null, headerLine = null;
+  for (const line of lines) {
+    const l = line.trim();
+    if (!l || l.includes('Shot Analysis')) continue;
+    if (/^[A-Za-z0-9\s]+,$/.test(l) && !l.startsWith(',') && l.split(',').length <= 2) {
+      currentClub = normalizeClub(l.replace(',','').trim());
+      headerLine = null;
+      continue;
+    }
+    if (l.startsWith(',Date,Time,')) { headerLine = l; continue; }
+    if (l.startsWith('Average,')) continue;
+    if (!headerLine || !currentClub) continue;
+    const c = l.split(',');
+    if (c.length < 20) continue;
+    const idx = parseInt(c[0]);
+    if (isNaN(idx)) continue;
+    const date = (c[1] || '').trim().replace(/\//g, '-');
+    shots.push({
+      source: filename, date, club: currentClub, index: idx,
+      ballSpeed: num(c[10]), launchAngle: num(c[11]), launchDirection: parseSuffixDir(c[12]),
+      spinRate: num(c[15]) || num(c[14]), spinAxis: parseSuffixDir(c[16], false),
+      backSpin: parseSuffixDir(c[14]), sideSpin: parseSuffixDir(c[13]),
+      apex: num(c[5]), carry: num(c[3]), total: null,
+      offline: parseSuffixDir(c[6]), landingAngle: num(c[8]),
+      clubPath: c.length > 20 ? parseSuffixDir(c[20]) : null,
+      faceAngle: c.length > 27 ? parseSuffixDir(c[27]) : null,
+      attackAngle: c.length > 19 ? parseSuffixDir(c[19], false) : null,
+      dynamicLoft: c.length > 23 ? num(c[23]) : null,
+      clubSpeed: c.length > 16 ? num(c[16]) : null,
+      smashFactor: c.length > 18 ? num(c[18]) : null,
+    });
+  }
+  return shots;
+}
+
+// Bushnell Session export: email on line 1, club sections with ",Date,Time,Ball Speed,Launch Angle,..."
+// Columns: idx, date, time, ballSpeed, launchAngle, launchDir, sideSpin, backSpin, spinRate,
+//   spinAxisTilt, clubSpeed, clubSpeedImpact, efficiency, AoA, clubPath, faceToPath,
+//   lieAngle, dynamicLoft, closureRate, horzImpact, vertImpact, faceToTarget,
+//   carry(22), total(23), peakHeight(24), offline(25), totalOffline(26), curve(27),
+//   descentAngle(28), hangTime(29), ...
+function parseSessionCSV(content, filename) {
+  const lines = content.split('\n');
+  const shots = [];
+  let currentClub = null, headerLine = null;
+  for (const line of lines) {
+    const l = line.trim();
+    if (!l) { continue; }
+    // Club line: "7i, " or "3h, " or "Driver, "
+    if (/^[A-Za-z0-9\s]+,\s*$/.test(l) && !l.startsWith(',') && l.split(',').length <= 3) {
+      currentClub = normalizeClub(l.replace(/,\s*$/, '').trim());
+      headerLine = null;
+      continue;
+    }
+    if (l.startsWith(',Date,Time,')) { headerLine = l; continue; }
+    if (l.startsWith('Average,')) continue;
+    if (!headerLine || !currentClub) continue;
+    const c = l.split(',');
+    if (c.length < 25) continue;
+    const idx = parseInt(c[0]);
+    if (isNaN(idx)) continue;
+    // Date: "3/19/26" → "03-19-2026"
+    const rawDate = (c[1] || '').trim();
+    const dp = rawDate.split('/');
+    let date = rawDate;
+    if (dp.length === 3) {
+      const mm = dp[0].padStart(2, '0');
+      const dd = dp[1].padStart(2, '0');
+      let yy = dp[2];
+      if (yy.length === 2) yy = (parseInt(yy) > 50 ? '19' : '20') + yy;
+      date = `${mm}-${dd}-${yy}`;
+    }
+    shots.push({
+      source: filename, date, club: currentClub, index: idx,
+      ballSpeed: num(c[3]), launchAngle: num(c[4]), launchDirection: num(c[5]),
+      sideSpin: num(c[6]), backSpin: num(c[7]), spinRate: num(c[8]),
+      spinAxis: num(c[9]), clubSpeed: num(c[10]),
+      smashFactor: num(c[12]), attackAngle: num(c[13]), clubPath: num(c[14]),
+      faceAngle: null, dynamicLoft: null,
+      carry: num(c[22]), total: null, apex: num(c[24]),
+      offline: num(c[25]), landingAngle: num(c[28]),
+    });
+  }
+  return shots;
+}
+
+// ─── Processing pipeline ───
+
+function avg(a) { return a.length ? a.reduce((s,v) => s+v, 0) / a.length : 0; }
+function std(a) { if (a.length < 2) return 0; const m = avg(a); return Math.sqrt(a.reduce((s,v) => s + (v-m)**2, 0) / (a.length-1)); }
+function median(a) { if (!a.length) return 0; const s = [...a].sort((x,y) => x-y); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : (s[m-1]+s[m])/2; }
+function pearsonR(x, y) {
+  const n = x.length; if (n < 2) return 0;
+  const mx = avg(x), my = avg(y);
+  let num = 0, dx2 = 0, dy2 = 0;
+  for (let i = 0; i < n; i++) { const dx = x[i]-mx, dy = y[i]-my; num += dx*dy; dx2 += dx*dx; dy2 += dy*dy; }
+  const d = Math.sqrt(dx2*dy2); return d === 0 ? 0 : num/d;
+}
+
+function theoreticalCarry(bs, la, sr) {
+  if (!bs || bs <= 0 || !la || la <= 0 || !sr || sr <= 0) return null;
+  const rho = 1.225 * Math.exp(-ELEVATION * 0.3048 / 8500);
+  const dr = rho / 1.225;
+  const v = bs * 0.44704, theta = la * Math.PI / 180;
+  let vx = v * Math.cos(theta), vy = v * Math.sin(theta);
+  const mass = 0.04593, r = 0.02135, area = Math.PI * r * r;
+  const Cd = 0.225 * dr, Cl = 0.00015 * sr / 1000 * dr;
+  let x = 0, y = 0, dt = 0.01;
+  for (let t = 0; t < 15; t += dt) {
+    const sp = Math.sqrt(vx*vx + vy*vy); if (!sp) break;
+    const drag = 0.5*rho*area*Cd*sp, lift = 0.5*rho*area*Cl*sp;
+    vx += (-drag*vx/mass)*dt; vy += (-9.81 - drag*vy/mass + lift*sp/mass)*dt;
+    x += vx*dt; y += vy*dt;
+    if (y < 0 && t > 0.1) break;
+  }
+  return x / 0.9144;
+}
+
+function processAllData(storedSessions) {
+  let allShots = [];
+  for (const sess of storedSessions) {
+    const content = sess.content || '';
+    const first = content.split('\n')[0] || '';
+    let shots;
+    if (first.includes('Shot Analysis')) {
+      shots = parseShotAnalysisCSV(content, sess.filename);
+    } else if (content.includes(',Date,Time,Ball Speed,Launch Angle,')) {
+      // Bushnell Session export (email on line 1, club sections with session headers)
+      shots = parseSessionCSV(content, sess.filename);
+    } else {
+      shots = parseDrivingRangeCSV(content, sess.filename);
+    }
+    allShots.push(...shots);
+  }
+
+  // Club correction: 6 Iron → 7 Iron for data before 03-19-2026
+  allShots.forEach(s => { if (s.club === '6 Iron' && s.date && s.date < '03-19-2026') s.club = '7 Iron'; });
+
+  // Ball type tagging — check saved overrides first, then defaults
+  const savedBallTypes = JSON.parse(lsGet('ball-types'));
+  allShots.forEach(s => {
+    s.ballType = savedBallTypes[s.date] || BALL_TYPE_DEFAULTS[s.date] || DEFAULT_BALL_TYPE;
+  });
+
+  // Dedup
+  const seen = new Set();
+  allShots = allShots.filter(s => { const k = `${s.date}|${s.club}|${s.index}`; if (seen.has(k)) return false; seen.add(k); return true; });
+  allShots.forEach((s, i) => { s.id = i; s.rawTheoCarry = theoreticalCarry(s.ballSpeed, s.launchAngle, s.spinRate); });
+
+  // Bottom 20% filter
+  const groups = {};
+  allShots.forEach(s => { const k = `${s.date}|${s.club}`; (groups[k] = groups[k] || []).push(s); });
+  for (const shots of Object.values(groups)) {
+    const wc = shots.filter(s => s.carry != null && s.carry > 0).sort((a,b) => a.carry - b.carry);
+    if (!wc.length) { shots.forEach(s => s.filtered = false); continue; }
+    const cutoff = wc[Math.floor(wc.length * 0.2)]?.carry ?? 0;
+    shots.forEach(s => { s.filtered = s.carry != null && s.carry >= cutoff; });
+  }
+
+  // Session summaries
+  const sessions = [];
+  for (const [key, shots] of Object.entries(groups)) {
+    const f = shots.filter(s => s.filtered); if (!f.length) continue;
+    const [date, club] = key.split('|');
+    const carries = f.filter(s => s.carry != null).map(s => s.carry);
+    const speeds = f.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
+    const spins = f.filter(s => s.spinRate != null).map(s => s.spinRate);
+    const launches = f.filter(s => s.launchAngle != null).map(s => s.launchAngle);
+    const attacks = f.filter(s => s.attackAngle != null).map(s => s.attackAngle);
+    const faces = f.filter(s => s.faceAngle != null).map(s => s.faceAngle);
+    const paths = f.filter(s => s.clubPath != null).map(s => s.clubPath);
+    const landings = f.filter(s => s.landingAngle != null).map(s => s.landingAngle);
+    const offlines = f.filter(s => s.offline != null).map(s => s.offline);
+    const ballType = f[0]?.ballType || DEFAULT_BALL_TYPE;
+    sessions.push({ date, club, shotCount: f.length, ballType,
+      ballSpeedAvg: avg(speeds), ballSpeedStd: std(speeds),
+      carryAvg: avg(carries), carryStd: std(carries), carryMin: carries.length ? Math.min(...carries) : 0,
+      carryMax: carries.length ? Math.max(...carries) : 0, carryMed: median(carries),
+      launchAngleAvg: avg(launches), attackAngleAvg: avg(attacks), faceAngleAvg: avg(faces),
+      clubPathAvg: avg(paths), landingAngleAvg: avg(landings), spinRateAvg: avg(spins),
+      offlineAvg: avg(offlines), offlineAbsAvg: offlines.length ? avg(offlines.map(Math.abs)) : 0,
+      leftPct: offlines.length ? offlines.filter(o => o < 0).length / offlines.length : 0,
+      rightPct: offlines.length ? offlines.filter(o => o > 0).length / offlines.length : 0,
+    });
+  }
+
+  // Club summaries
+  const clubMap = {};
+  allShots.filter(s => s.filtered).forEach(s => { (clubMap[s.club] = clubMap[s.club] || []).push(s); });
+  const clubSummaries = [];
+  for (const [club, shots] of Object.entries(clubMap)) {
+    const carries = shots.filter(s => s.carry != null).map(s => s.carry);
+    const speeds = shots.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
+    const spins = shots.filter(s => s.spinRate != null).map(s => s.spinRate);
+    if (!carries.length) continue;
+    clubSummaries.push({ club, ballSpeedAvg: avg(speeds), carryAvg: avg(carries), carryMed: median(carries),
+      carryStd: std(carries), spinRateAvg: avg(spins), shotCount: shots.length, gap: null });
+  }
+  clubSummaries.sort((a,b) => b.carryAvg - a.carryAvg);
+  for (let i = 0; i < clubSummaries.length - 1; i++) clubSummaries[i].gap = clubSummaries[i].carryAvg - clubSummaries[i+1].carryAvg;
+
+  // Calibration
+  const paired = allShots.filter(s => s.filtered && s.carry != null && s.rawTheoCarry != null);
+  let correlation = 0, rmse = 0, offset = 0;
+  if (paired.length > 1) {
+    const a = paired.map(s => s.carry), t = paired.map(s => s.rawTheoCarry);
+    correlation = pearsonR(a, t); offset = avg(a) - avg(t);
+    rmse = Math.sqrt(avg(paired.map(s => (s.carry - s.rawTheoCarry)**2)));
+  }
+
+  return { shots: allShots, sessions, clubSummaries,
+    calibration: { elevation: ELEVATION, airDensity: 1.225 * Math.exp(-ELEVATION*0.3048/8500), offset, correlation, rmse },
+    lastUpdated: new Date().toISOString(),
+    fileCount: storedSessions.length,
+  };
+}
+
+// ─── Rebuild from IndexedDB ───
+async function rebuildData() {
+  const stored = await getAllSessions();
+  if (!stored.length) {
+    DATA = null;
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('emptyState').style.display = '';
+    return;
+  }
+  DATA = processAllData(stored);
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('mainContent').style.display = '';
+  if (!selectedClub || !DATA.clubSummaries.find(c => c.club === selectedClub)) {
+    selectedClub = DATA.clubSummaries.length > 0
+      ? DATA.clubSummaries[Math.min(2, DATA.clubSummaries.length - 1)].club : '7 Iron';
+  }
+  buildClubSelector();
+  buildDateFilter();
+  buildBallTypeFilter();
+  updateDashboard();
+}
+
+async function removeSession(filename) {
+  await deleteSession(filename);
+  showToast('Removed ' + filename);
+  await rebuildData();
+}
+
+// ─── Auto-bootstrap from server ───
+async function bootstrapFromServer() {
+  try {
+    const res = await fetch('sessions.json');
+    if (!res.ok) return false;
+    const files = await res.json();
+    if (!files.length) return false;
+    document.getElementById('loadingOverlay').innerHTML = '<div>Loading sessions...</div><div style="font-size:12px;color:var(--text3)">0 / ' + files.length + '</div>';
+    let loaded = 0;
+    for (const filename of files) {
+      const r = await fetch('sessions/' + encodeURIComponent(filename));
+      if (!r.ok) continue;
+      const content = await r.text();
+      await saveSession(filename, content);
+      loaded++;
+      document.getElementById('loadingOverlay').innerHTML = '<div>Loading sessions...</div><div style="font-size:12px;color:var(--text3)">' + loaded + ' / ' + files.length + '</div>';
+    }
+    return loaded > 0;
+  } catch (e) { return false; }
+}
+
+// ─── Cloud Account ───
+async function cloudSignUp() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const name = document.getElementById('cloudName').value.trim();
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be 8+ characters'; return; }
+  if (!name) { errEl.textContent = 'Display name required'; return; }
+
+  try {
+    await API.register(email, password, name);
+    updateCloudUI();
+    showToast('Account created!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+async function cloudSignIn() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email) { errEl.textContent = 'Email required'; return; }
+  if (!password) { errEl.textContent = 'Password required'; return; }
+
+  try {
+    await API.login(email, password);
+    updateCloudUI();
+    showToast('Signed in!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+function cloudLogout() {
+  API.clearTokens();
+  updateCloudUI();
+  showToast('Logged out');
+}
+
+async function cloudUpgradeOrManage() {
+  try {
+    const status = await API.getSubscriptionStatus();
+    if (status.is_active) {
+      await API.openBillingPortal();
+    } else {
+      // Default to pro monthly — in production, show plan picker
+      showToast('Stripe checkout not configured yet');
+    }
+  } catch (e) {
+    showToast('Billing: ' + e.message);
+  }
+}
+
+function updateCloudUI() {
+  const connected = document.getElementById('cloudConnected');
+  const notConnected = document.getElementById('cloudNotConnected');
+
+  if (API.enabled) {
+    connected.style.display = '';
+    notConnected.style.display = 'none';
+    // Decode email from JWT if available
+    try {
+      const payload = JSON.parse(atob(API.token.split('.')[1]));
+      document.getElementById('cloudEmailDisplay').textContent = payload.sub || '';
+    } catch { /* ignore */ }
+    // Check subscription status
+    API.getSubscriptionStatus().then(status => {
+      const tierEl = document.getElementById('cloudTier');
+      const btn = document.getElementById('cloudUpgradeBtn');
+      const tierNames = { free: 'Free', pro: 'Pro', pro_plus: 'Pro+', coach: 'Coach', academy: 'Academy' };
+      tierEl.textContent = `Plan: ${tierNames[status.tier] || status.tier}`;
+      if (status.tier !== 'free') {
+        btn.textContent = 'Manage Subscription';
+      } else {
+        btn.textContent = 'Upgrade to Pro';
+      }
+    }).catch(() => {});
+  } else {
+    connected.style.display = 'none';
+    notConnected.style.display = '';
+  }
+}
+
+// ─── AI Coach ───
+async function runAICoach() {
+  if (!API.enabled) {
+    // Run locally using current data — build the analysis prompt client-side
+    // and show a message that cloud account is needed for full AI
+    runLocalCoach();
+    return;
+  }
+
+  const btn = document.getElementById('coachBtn');
+  const loading = document.getElementById('coachLoading');
+  const results = document.getElementById('coachResults');
+  const context = document.getElementById('coachInput').value.trim();
+
+  btn.style.display = 'none';
+  loading.style.display = '';
+  results.style.display = 'none';
+
+  try {
+    const analysis = await API.getAIAnalysis(context || null);
+    renderCoachResults(analysis);
+  } catch (e) {
+    showToast('AI analysis failed: ' + e.message);
+    // Fall back to local coach
+    runLocalCoach();
+  } finally {
+    btn.style.display = '';
+    loading.style.display = 'none';
+  }
+}
+
+// Helper stats functions
+function _avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : null; }
+function _std(arr) { if (arr.length < 2) return null; const m = _avg(arr); return Math.sqrt(arr.reduce((s,v) => s + (v-m)**2, 0) / arr.length); }
+function _pct(arr, fn) { return arr.length ? (arr.filter(fn).length / arr.length * 100) : null; }
+
+function runLocalCoach() {
+  if (!DATA || !DATA.shots.length) { showToast('Import some sessions first'); return; }
+
+  const fs = DATA.shots.filter(s => s.filtered);
+  const clubs = {};
+  fs.forEach(s => { (clubs[s.club] = clubs[s.club] || []).push(s); });
+
+  // ── Handicap estimation from 7 Iron carry ──
+  const benchmarks7i = [[175,0,5],[165,5,10],[155,10,15],[145,15,20],[135,20,25],[120,25,30],[100,30,36]];
+  const benchmarksDr = [[270,0,5],[250,5,10],[230,10,15],[210,15,20],[190,20,25],[170,25,30],[150,30,36]];
+  const hcFactors = [];
+  let hcLow = 15, hcHigh = 36;
+
+  const iron7 = clubs['7 Iron'];
+  if (iron7 && iron7.length >= 10) {
+    const avg = _avg(iron7.map(s=>s.carry).filter(Boolean));
+    if (avg) {
+      for (const [thresh, lo, hi] of benchmarks7i) {
+        if (avg >= thresh) { hcFactors.push(`7 Iron avg carry ${avg.toFixed(0)} yds`); hcLow = lo; hcHigh = hi; break; }
+      }
+    }
+  }
+  const driver = clubs['Driver'];
+  if (driver && driver.length >= 5) {
+    const avg = _avg(driver.map(s=>s.carry).filter(Boolean));
+    if (avg) {
+      for (const [thresh, lo, hi] of benchmarksDr) {
+        if (avg >= thresh) { hcFactors.push(`Driver avg carry ${avg.toFixed(0)} yds`); hcLow = (hcLow + lo) / 2; hcHigh = (hcHigh + hi) / 2; break; }
+      }
+    }
+  }
+  // Smash factor signal
+  const allSmash = fs.map(s => s.smashFactor).filter(Boolean);
+  if (allSmash.length) {
+    const avgSm = _avg(allSmash);
+    if (avgSm >= 1.45) hcFactors.push(`Excellent smash factor (${avgSm.toFixed(2)})`);
+    else if (avgSm >= 1.40) hcFactors.push(`Good smash factor (${avgSm.toFixed(2)})`);
+    else hcFactors.push(`Smash factor needs work (${avgSm.toFixed(2)})`);
+  }
+
+  // ── Per-club analysis ──
+  const clubInsights = [];
+  for (const [club, shots] of Object.entries(clubs)) {
+    const carries = shots.map(s => s.carry).filter(Boolean);
+    const speeds = shots.map(s => s.ballSpeed).filter(Boolean);
+    const spins = shots.map(s => s.spinRate).filter(Boolean);
+    const launches = shots.map(s => s.launchAngle).filter(Boolean);
+    const offlines = shots.map(s => s.offline).filter(c => c != null);
+    const smashes = shots.map(s => s.smashFactor).filter(Boolean);
+    const clubPaths = shots.map(s => s.clubPath).filter(c => c != null);
+    const faceAngles = shots.map(s => s.faceAngle).filter(c => c != null);
+
+    const avgCarry = _avg(carries); const stdCarry = _std(carries);
+    const avgSpeed = _avg(speeds);
+    const avgSpin = _avg(spins);
+    const avgLaunch = _avg(launches);
+    const avgOff = _avg(offlines); const stdOff = _std(offlines);
+    const avgSmash = _avg(smashes);
+    const avgPath = _avg(clubPaths);
+    const avgFace = _avg(faceAngles);
+    const leftPct = _pct(offlines, v => v < 0);
+
+    const strengths = [];
+    const weaknesses = [];
+
+    // Carry consistency
+    if (stdCarry != null && carries.length >= 5) {
+      if (stdCarry < 6) strengths.push(`Very consistent carry (${stdCarry.toFixed(1)} yds std dev)`);
+      else if (stdCarry < 10) strengths.push(`Good carry consistency (${stdCarry.toFixed(1)} yds std dev)`);
+      else weaknesses.push(`Carry inconsistent (${stdCarry.toFixed(1)} yds std dev) — focus on strike quality`);
+    }
+
+    // Dispersion
+    if (stdOff != null && offlines.length >= 5) {
+      if (stdOff < 6) strengths.push(`Tight dispersion (${stdOff.toFixed(1)} yds)`);
+      else if (stdOff < 12) {} // neutral
+      else weaknesses.push(`Wide dispersion (${stdOff.toFixed(1)} yds) — work on face control at impact`);
+    }
+
+    // Miss pattern
+    if (leftPct != null && offlines.length >= 10) {
+      if (leftPct > 75) weaknesses.push(`Pull bias — ${leftPct.toFixed(0)}% of shots go left. Check club path and face angle at impact`);
+      else if (leftPct < 25) weaknesses.push(`Push/slice pattern — ${(100-leftPct).toFixed(0)}% go right. Path is likely out-to-in`);
+      else if (leftPct > 40 && leftPct < 60) strengths.push('Balanced miss pattern (no strong left/right bias)');
+    }
+
+    // Spin analysis
+    if (avgSpin != null && spins.length >= 5) {
+      const isIron = club.includes('Iron') || club === 'PW' || club === 'GW' || club === 'SW' || club === 'LW';
+      const isHybrid = club.includes('Hybrid');
+      if (isIron) {
+        if (avgSpin > 7000) weaknesses.push(`Spin too high (${avgSpin.toFixed(0)} rpm) — ball is ballooning, costing carry distance`);
+        else if (avgSpin < 3500 && !club.includes('5')) weaknesses.push(`Spin low (${avgSpin.toFixed(0)} rpm) — ball won't hold greens`);
+        else strengths.push(`Good spin rate (${avgSpin.toFixed(0)} rpm)`);
+      } else if (isHybrid) {
+        if (avgSpin > 5500) weaknesses.push(`Spin high for a hybrid (${avgSpin.toFixed(0)} rpm) — losing distance`);
+        else strengths.push(`Good hybrid spin (${avgSpin.toFixed(0)} rpm)`);
+      } else if (club === 'Driver') {
+        if (avgSpin > 3200) weaknesses.push(`Driver spin high (${avgSpin.toFixed(0)} rpm) — try lowering tee or teeing it forward`);
+        else if (avgSpin < 1800) weaknesses.push(`Driver spin too low (${avgSpin.toFixed(0)} rpm) — ball dropping out of the air`);
+        else strengths.push(`Good driver spin (${avgSpin.toFixed(0)} rpm)`);
+      }
+    }
+
+    // Launch angle
+    if (avgLaunch != null && launches.length >= 5) {
+      if (club === 'Driver') {
+        if (avgLaunch < 10) weaknesses.push(`Launch too low (${avgLaunch.toFixed(1)}°) — try higher tee or more loft`);
+        else if (avgLaunch > 16) weaknesses.push(`Launch high (${avgLaunch.toFixed(1)}°) — may be hitting up too much or tee too high`);
+        else strengths.push(`Good launch angle (${avgLaunch.toFixed(1)}°)`);
+      } else if (avgLaunch < 14 && (club.includes('Iron') || club.includes('Hybrid'))) {
+        weaknesses.push(`Launch low (${avgLaunch.toFixed(1)}°) — may need to check ball position or shaft flex`);
+      }
+    }
+
+    // Smash factor
+    if (avgSmash != null && smashes.length >= 5) {
+      if (avgSmash >= 1.45) strengths.push(`Excellent strike quality (${avgSmash.toFixed(2)} smash factor)`);
+      else if (avgSmash < 1.35) weaknesses.push(`Strike quality needs work (${avgSmash.toFixed(2)} smash factor) — focus on center contact`);
+    }
+
+    // Club path + face angle combo
+    if (avgPath != null && avgFace != null && clubPaths.length >= 5) {
+      const pathDir = avgPath < -1.5 ? 'out-to-in' : avgPath > 1.5 ? 'in-to-out' : 'neutral';
+      const faceDir = avgFace < -1.5 ? 'closed' : avgFace > 1.5 ? 'open' : 'square';
+      if (pathDir === 'out-to-in' && faceDir === 'closed') weaknesses.push(`Pull pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° closed`);
+      else if (pathDir === 'out-to-in' && faceDir === 'open') weaknesses.push(`Slice pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° open`);
+      else if (pathDir === 'in-to-out' && faceDir === 'closed') strengths.push(`Draw pattern: path ${avgPath.toFixed(1)}° in-to-out + face ${avgFace.toFixed(1)}°`);
+      else if (pathDir === 'neutral' && faceDir === 'square') strengths.push('Neutral path and face — solid swing mechanics');
+    }
+
+    // Summary line
+    const parts = [`${shots.length} shots`];
+    if (avgCarry) parts.push(`avg carry ${avgCarry.toFixed(1)} yds`);
+    if (avgSpeed) parts.push(`avg speed ${avgSpeed.toFixed(1)} mph`);
+    if (avgSpin) parts.push(`${avgSpin.toFixed(0)} rpm`);
+    if (avgSmash) parts.push(`smash ${avgSmash.toFixed(2)}`);
+
+    clubInsights.push({
+      club_name: club,
+      summary: parts.join(', '),
+      strengths: strengths.length ? strengths : ['Not enough data to assess'],
+      weaknesses: weaknesses.length ? weaknesses : ['Looking good — keep it up!'],
+      priority_fix: weaknesses.length ? weaknesses[0] : 'Maintain current form',
+    });
+  }
+
+  const order = {'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,
+    '3 Iron':10,'4 Iron':11,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,
+    'PW':17,'GW':18,'SW':19,'LW':20};
+  clubInsights.sort((a, b) => (order[a.club_name] || 50) - (order[b.club_name] || 50));
+
+  const totalShots = fs.length;
+  const uniqueClubs = Object.keys(clubs).length;
+
+  // ── Generate targeted drills based on actual weaknesses ──
+  const drills = [];
+  const hasDispersionIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('dispersion')));
+  const hasConsistencyIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('inconsistent') || w.includes('variance')));
+  const hasMissPattern = clubInsights.some(c => c.weaknesses.some(w => w.includes('bias') || w.includes('Pull') || w.includes('Slice') || w.includes('push')));
+  const hasSpinIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('Spin')));
+
+  if (hasDispersionIssue) {
+    drills.push({
+      name: 'Gate Drill', focus_area: 'accuracy',
+      description: 'Place two alignment sticks 10 yards apart at your average carry distance. Hit 20 shots trying to land between them. Track success rate. Start with your most consistent club and work toward your worst.',
+      duration_minutes: 20, difficulty: 'intermediate',
+      expected_improvement: 'Tighter landing zone, better face control through impact',
+    });
+  }
+  if (hasConsistencyIssue) {
+    drills.push({
+      name: '10-Shot Blocks', focus_area: 'consistency',
+      description: 'Hit 10 shots with the same club at the same target. After each block, note your avg carry and std dev. Rest 30 seconds between blocks. Do 3 blocks per club. Goal: reduce std dev by 2+ yards over 4 weeks.',
+      duration_minutes: 25, difficulty: 'beginner',
+      expected_improvement: 'More predictable distances, better club selection on course',
+    });
+  }
+  if (hasMissPattern) {
+    drills.push({
+      name: 'Path Correction', focus_area: 'swing path',
+      description: 'Place a headcover 4 inches outside the ball (for pull/hook) or inside (for push/slice). Make half swings avoiding the headcover. This forces your path to shallow out. Gradually increase to full swings over 15 shots.',
+      duration_minutes: 15, difficulty: 'intermediate',
+      expected_improvement: 'Straighter ball flight, reduced miss pattern',
+    });
+  }
+  if (hasSpinIssue) {
+    drills.push({
+      name: 'Strike Location Check', focus_area: 'contact quality',
+      description: 'Apply foot spray or impact tape to the club face. Hit 10 shots and check the strike pattern. If strikes are toward the heel, stand slightly further from the ball. If toe-heavy, stand closer. Goal: center-face contact on 7/10 shots.',
+      duration_minutes: 10, difficulty: 'beginner',
+      expected_improvement: 'Better spin rates, more distance from the same swing',
+    });
+  }
+  if (!drills.length) {
+    drills.push({
+      name: 'Stock Shot Routine', focus_area: 'maintenance',
+      description: 'Your numbers look solid. Hit 10 shots per club through your bag, focusing on tempo and target. Track any club where carry drops more than 5 yards from your average — that\'s your early warning system.',
+      duration_minutes: 30, difficulty: 'intermediate',
+      expected_improvement: 'Maintain current form, catch regression early',
+    });
+  }
+
+  // ── Handicap context ──
+  let hcContext;
+  if (hcFactors.length) {
+    hcContext = `Estimated handicap range: ${Math.round(hcLow)}-${Math.round(hcHigh)}. Based on: ${hcFactors.join('; ')}. `;
+    hcContext += hcHigh <= 10 ? 'Your ball striking is strong — short game and course management are likely the biggest gaps.' :
+      hcHigh <= 20 ? 'Consistency is your main opportunity. Reducing carry variance by 3-5 yards per club would drop 2-3 strokes.' :
+      'Focus on solid contact first. Better strike quality (smash factor) gives you free distance with the same swing.';
+  } else {
+    hcContext = 'Need more data (especially 7 Iron and Driver) for a reliable handicap estimate. Keep importing sessions.';
+  }
+
+  // ── Overall assessment ──
+  const bestClub = clubInsights.find(c => c.weaknesses[0]?.includes('Looking good') || c.weaknesses[0]?.includes('Maintain'));
+  const worstClub = clubInsights.filter(c => c.weaknesses.length > 0 && !c.weaknesses[0]?.includes('Looking good')).slice(-1)[0];
+  let assessment = `Analysis of ${totalShots} filtered shots across ${uniqueClubs} clubs. `;
+  if (bestClub) assessment += `Your ${bestClub.club_name} is your most reliable club. `;
+  if (worstClub) assessment += `Your ${worstClub.club_name} needs the most attention. `;
+  if (!API.enabled) assessment += 'Upgrade to Pro for full AI coaching with personalized session plans.';
+
+  // ── Next session plan ──
+  const weakestClub = clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain'));
+  const focusClub = weakestClub.length ? weakestClub[0].club_name : (clubInsights[0]?.club_name || '7 Iron');
+  const secondClub = weakestClub.length > 1 ? weakestClub[1].club_name : '7 Iron';
+  const nextPlan = `Warm up: 10 easy swings with ${secondClub}. Main block: 30 focused shots with ${focusClub} — ${weakestClub[0]?.priority_fix || 'track carry and offline'}. Cool down: 10 shots alternating between your two most consistent clubs. Total: ~50 shots, 45 minutes.`;
+
+  // ── Equipment notes ──
+  const equipNotes = [];
+  const allSpeeds = fs.map(s => s.ballSpeed).filter(Boolean);
+  if (allSpeeds.length) {
+    const maxSpeed = Math.max(...allSpeeds);
+    if (maxSpeed > 165) equipNotes.push('Your ball speed supports stiff or x-stiff shafts');
+    else if (maxSpeed > 140) equipNotes.push('Regular to stiff shaft flex is appropriate for your speed');
+    else equipNotes.push('Consider regular flex shafts for your swing speed');
+  }
+  // Gap analysis
+  const clubCarries = clubInsights.filter(c => c.summary.includes('avg carry')).map(c => ({
+    name: c.club_name,
+    carry: parseFloat(c.summary.match(/avg carry ([\d.]+)/)?.[1] || 0),
+  })).filter(c => c.carry > 0).sort((a,b) => b.carry - a.carry);
+  for (let i = 0; i < clubCarries.length - 1; i++) {
+    const gap = clubCarries[i].carry - clubCarries[i+1].carry;
+    if (gap > 25) equipNotes.push(`${Math.round(gap)} yard gap between ${clubCarries[i].name} and ${clubCarries[i+1].name} — consider adding a club in between`);
+  }
+
+  renderCoachResults({
+    overall_assessment: assessment,
+    handicap_context: hcContext,
+    top_priorities: clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain')).slice(0, 3).map(c => `${c.club_name}: ${c.priority_fix}`),
+    club_insights: clubInsights,
+    drills,
+    equipment_notes: equipNotes.length ? equipNotes : ['Your equipment setup looks reasonable based on the data'],
+    next_session_plan: nextPlan,
+  });
+}
+
+function renderCoachResults(data) {
+  const results = document.getElementById('coachResults');
+  results.style.display = '';
+
+  // Assessment
+  document.getElementById('coachAssessment').textContent = data.overall_assessment || '';
+
+  // Handicap
+  document.getElementById('coachHandicap').textContent = data.handicap_context || '';
+
+  // Priorities
+  const prioEl = document.getElementById('coachPriorities');
+  prioEl.innerHTML = (data.top_priorities || []).map(p => `<li>${p}</li>`).join('');
+
+  // Club insights
+  const clubsEl = document.getElementById('coachClubs');
+  clubsEl.innerHTML = (data.club_insights || []).map(ci => `
+    <div style="border-bottom:1px solid var(--border);padding:10px 0">
+      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${ci.club_name}</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${ci.summary}</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Strengths</div>
+          ${ci.strengths.map(s => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">+ ${s}</div>`).join('')}
+        </div>
+        <div style="flex:1;min-width:120px">
+          <div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Work On</div>
+          ${ci.weaknesses.map(w => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">- ${w}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  // Drills
+  const drillsEl = document.getElementById('coachDrills');
+  drillsEl.innerHTML = (data.drills || []).map(d => `
+    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--bg3)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-weight:600;font-size:13px">${d.name}</span>
+        <span style="font-size:10px;color:var(--text3);background:var(--bg2);padding:2px 8px;border-radius:4px">${d.duration_minutes} min · ${d.difficulty}</span>
+      </div>
+      <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${d.focus_area}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px">${d.description}</div>
+      <div style="font-size:11px;color:var(--green)">Expected: ${d.expected_improvement}</div>
+    </div>
+  `).join('');
+
+  // Equipment
+  const equipEl = document.getElementById('coachEquipment');
+  equipEl.innerHTML = (data.equipment_notes || []).map(n => `<li>${n}</li>`).join('');
+
+  // Next session
+  document.getElementById('coachNextSession').textContent = data.next_session_plan || '';
+}
+
+// ─── Migration: move old g730 DB to first profile ───
+async function migrateOldData() {
+  // Check if old 'g730' DB has data
+  try {
+    const db = await new Promise((resolve, reject) => {
+      const req = indexedDB.open('g730', 1);
+      req.onupgradeneeded = e => { e.target.result.createObjectStore(STORE, { keyPath: 'filename' }); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+    const tx = db.transaction(STORE, 'readonly');
+    const all = await new Promise((resolve, reject) => {
+      const r = tx.objectStore(STORE).getAll();
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+    db.close();
+    return all; // returns old sessions array (may be empty)
+  } catch (e) { return []; }
+}
+
+async function runMigration(username) {
+  const oldSessions = await migrateOldData();
+  if (!oldSessions.length) return;
+  // Copy to new profile DB
+  setActiveUser(username);
+  for (const sess of oldSessions) {
+    await saveSession(sess.filename, sess.content);
+  }
+  // Copy ball types
+  const oldBT = localStorage.getItem('g730-ball-types');
+  if (oldBT) lsSet('ball-types', oldBT);
+}
+
+// ─── Init ───
+async function init() {
+  try {
+    let activeUser = getActiveUser();
+    const profiles = getProfiles();
+
+    // Check if we need to migrate (no profiles exist but old DB might have data)
+    if (!Object.keys(profiles).length) {
+      const oldSessions = await migrateOldData();
+      if (oldSessions.length) {
+        createProfile('shane', 'Shane');
+        await runMigration('shane');
+        setActiveUser('shane');
+        activeUser = 'shane';
+      }
+    }
+
+    // Pre-create family profiles if none exist
+    if (!Object.keys(getProfiles()).length) {
+      createProfile('shane', 'Shane');
+      createProfile('zach', 'Zach');
+      createProfile('sam', 'Sam');
+      createProfile('luke', 'Luke');
+      setActiveUser('shane');
+      activeUser = 'shane';
+    }
+    // Ensure all family profiles exist
+    const p = getProfiles();
+    if (!p['shane']) createProfile('shane', 'Shane');
+    if (!p['zach']) createProfile('zach', 'Zach');
+    if (!p['sam']) createProfile('sam', 'Sam');
+    if (!p['luke']) createProfile('luke', 'Luke');
+
+    // No active user or stale reference — pick the first profile
+    if (!activeUser || !getProfiles()[activeUser]) {
+      activeUser = Object.keys(getProfiles())[0];
+      setActiveUser(activeUser);
+    }
+
+    updateProfileUI();
+    renderProfileSwitchList();
+    const stored = await getAllSessions();
+    if (!stored.length) {
+      const bootstrapped = await bootstrapFromServer();
+      if (!bootstrapped) {
+        document.getElementById('loadingOverlay').classList.add('hidden');
+        document.getElementById('emptyState').style.display = '';
+        return;
+      }
+    }
+    await rebuildData();
+  } catch (err) {
+    document.getElementById('subtitle').textContent = 'Error: ' + err.message;
+  } finally {
+    document.getElementById('loadingOverlay').classList.add('hidden');
+  }
+}
+
+// ─── UI Helpers (same as before) ───
+function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 2500); }
+
+function applyBallTypeFilter(items) {
+  if (ballTypeFilter === 'all') return items;
+  return items.filter(s => s.ballType === ballTypeFilter);
+}
+function parseDateStr(d) {
+  // Parse MM-DD-YYYY format to Date object
+  if (!d) return null;
+  const p = d.split('-');
+  if (p.length !== 3) return null;
+  return new Date(parseInt(p[2]), parseInt(p[0]) - 1, parseInt(p[1]));
+}
+function getDateCutoff(days) {
+  const now = new Date();
+  now.setHours(23, 59, 59, 999);
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - days);
+  cutoff.setHours(0, 0, 0, 0);
+  return cutoff;
+}
+function applyDateFilter(items) {
+  if (dateFilterMode === 'all') return items;
+  if (dateFilterMode === 'last10' || dateFilterMode === 'last30') {
+    const days = dateFilterMode === 'last10' ? 10 : 30;
+    const cutoff = getDateCutoff(days);
+    return items.filter(s => { const d = parseDateStr(s.date); return d && d >= cutoff; });
+  }
+  if (dateFilterMode.startsWith('month:')) { const m = dateFilterMode.split(':')[1]; return items.filter(s => s.date && s.date.startsWith(m)); }
+  if (dateFilterMode.startsWith('session:')) { const d = dateFilterMode.split(':')[1]; return items.filter(s => s.date === d); }
+  return items;
+}
+function getFilteredShots() {
+  if (!DATA) return [];
+  return applyBallTypeFilter(applyDateFilter(DATA.shots));
+}
+function getFilteredSessions() {
+  if (!DATA) return [];
+  return applyBallTypeFilter(applyDateFilter(DATA.sessions));
+}
+
+function buildDateFilter() {
+  const select = document.getElementById('dateFilter');
+  const allDates = [...new Set(DATA.sessions.map(s => s.date))].sort();
+  const monthNames = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
+  let html = '<option value="all">All Time</option>';
+  html += '<option value="last10">Last 10 Days</option>';
+  html += '<option value="last30">Last 30 Days</option>';
+  html += '<option disabled>──────────</option>';
+  const months = [...new Set(allDates.map(d => d.substring(0, 2)))].sort();
+  months.forEach(m => { const c = allDates.filter(d => d.startsWith(m)).length; html += `<option value="month:${m}">${monthNames[m]||m} (${c} sessions)</option>`; });
+  html += '<option disabled>──────────</option>';
+  allDates.forEach(d => { const clubs = DATA.sessions.filter(s => s.date === d).map(s => s.club).join(', '); html += `<option value="session:${d}">${d} · ${clubs}</option>`; });
+  select.innerHTML = html;
+  select.value = dateFilterMode;
+}
+function onDateFilterChange() { dateFilterMode = document.getElementById('dateFilter').value; updateDashboard(); }
+function onBallTypeFilterChange() { ballTypeFilter = document.getElementById('ballTypeFilter').value; updateDashboard(); }
+
+function buildBallTypeFilter() {
+  const types = [...new Set(DATA.shots.map(s => s.ballType))].sort();
+  const select = document.getElementById('ballTypeFilter');
+  let html = '<option value="all">All Balls</option>';
+  types.forEach(t => { html += `<option value="${t}">${t}</option>`; });
+  select.innerHTML = html;
+  select.value = ballTypeFilter;
+}
+
+function buildClubSelector() {
+  const clubs = [...new Set(DATA.clubSummaries.map(c => c.club))];
+  DATA.sessions.forEach(s => { if (!clubs.includes(s.club)) clubs.push(s.club); });
+  document.getElementById('clubSelect').innerHTML = clubs.map(c =>
+    `<button class="filter-btn ${c === selectedClub ? 'active' : ''}" onclick="selectClub('${c}')">${c}</button>`).join('');
+}
+function selectClub(club) { selectedClub = club; document.querySelectorAll('.filter-btn').forEach(b => b.classList.toggle('active', b.textContent === club)); updateDashboard(); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  TAB_LIST.forEach(t => document.getElementById('tab-' + t).classList.toggle('section-hidden', t !== tab));
+  setTimeout(() => updateDashboard(), 50);
+}
+
+function updateDashboard() {
+  if (!DATA) return;
+  const fs = getFilteredShots(), fss = getFilteredSessions();
+  const active = fs.filter(s => s.filtered);
+  const label = dateFilterMode === 'all' ? 'all time' : dateFilterMode.startsWith('month:') ? dateFilterMode.split(':')[1] : dateFilterMode.split(':')[1];
+  const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
+  document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
+  updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
+  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab(); updateCloudUI();
+}
+
+// ─── KPIs ───
+function updateKPIs(allShots) {
+  const src = allShots.filter(s => s.filtered && s.club === selectedClub);
+  const carries = src.filter(s=>s.carry!=null).map(s=>s.carry), speeds = src.filter(s=>s.ballSpeed!=null).map(s=>s.ballSpeed);
+  const spins = src.filter(s=>s.spinRate!=null).map(s=>s.spinRate), launches = src.filter(s=>s.launchAngle!=null).map(s=>s.launchAngle);
+  const paths = src.filter(s=>s.clubPath!=null).map(s=>s.clubPath), faces = src.filter(s=>s.faceAngle!=null).map(s=>s.faceAngle);
+  document.getElementById('kpiGrid').innerHTML = `
+    <div class="kpi"><div class="kpi-value" style="color:${GREEN}">${carries.length?avg(carries).toFixed(1):'--'}</div><div class="kpi-label">Carry</div><div class="kpi-sub">${carries.length} shots</div></div>
+    <div class="kpi"><div class="kpi-value" style="color:${BLUE}">${speeds.length?avg(speeds).toFixed(1):'--'}</div><div class="kpi-label">Ball Speed</div><div class="kpi-sub">&sigma; ${speeds.length?std(speeds).toFixed(1):'--'}</div></div>
+    <div class="kpi"><div class="kpi-value" style="color:${GOLD}">${spins.length?Math.round(avg(spins)):'--'}</div><div class="kpi-label">Spin Rate</div><div class="kpi-sub">&sigma; ${spins.length?Math.round(std(spins)):'--'}</div></div>
+    <div class="kpi"><div class="kpi-value" style="color:${TEAL}">${launches.length?avg(launches).toFixed(1):'--'}&deg;</div><div class="kpi-label">Launch</div><div class="kpi-sub">&sigma; ${launches.length?std(launches).toFixed(1):'--'}&deg;</div></div>
+    <div class="kpi"><div class="kpi-value" style="color:${PURPLE}">${paths.length?(avg(paths)>=0?'+':'')+avg(paths).toFixed(1)+'&deg;':'--'}</div><div class="kpi-label">Club Path</div><div class="kpi-sub">${paths.length} shots</div></div>
+    <div class="kpi"><div class="kpi-value" style="color:${PINK}">${faces.length?(avg(faces)>=0?'+':'')+avg(faces).toFixed(1)+'&deg;':'--'}</div><div class="kpi-label">Face Angle</div><div class="kpi-sub">${faces.length} shots</div></div>`;
+}
+
+function chartOpts() { return { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: TEXT3, font: { size: 10 } } } }, scales: { x: { ticks: { color: TEXT3, font: { size: 10 } }, grid: { color: BORDER } }, y: { ticks: { color: TEXT3, font: { size: 10 } }, grid: { color: BORDER } } } }; }
+
+function updateTrendChart(sess) {
+  const s = sess.filter(s=>s.club===selectedClub).sort((a,b)=>a.date.localeCompare(b.date));
+  if (charts.trend) charts.trend.destroy();
+  const ctx = document.getElementById('trendChart'); if (!ctx) return;
+  charts.trend = new Chart(ctx, { type:'line', data:{ labels:s.map(x=>x.date.replace(/-2026$/,'')),
+    datasets:[{label:'Carry (yds)',data:s.map(x=>+x.carryAvg.toFixed(1)),borderColor:GREEN,backgroundColor:GREEN+'22',tension:.3,fill:true,pointRadius:4,pointBackgroundColor:GREEN},
+    {label:'Ball Speed',data:s.map(x=>+x.ballSpeedAvg.toFixed(1)),borderColor:BLUE,borderDash:[4,4],tension:.3,pointRadius:3,pointBackgroundColor:BLUE}]}, options:chartOpts()});
+}
+
+function updateDistChart(allShots) {
+  const carries = allShots.filter(s=>s.filtered&&s.club===selectedClub&&s.carry!=null).map(s=>s.carry);
+  if (charts.dist) charts.dist.destroy(); if (!carries.length) return;
+  const mn = Math.floor(Math.min(...carries)/5)*5, mx = Math.ceil(Math.max(...carries)/5)*5, bins=[];
+  for (let b=mn;b<mx;b+=5) bins.push({label:`${b}-${b+5}`,count:carries.filter(c=>c>=b&&c<b+5).length});
+  const ctx = document.getElementById('distChart'); if (!ctx) return;
+  charts.dist = new Chart(ctx,{type:'bar',data:{labels:bins.map(b=>b.label),datasets:[{data:bins.map(b=>b.count),backgroundColor:TEAL+'88',borderColor:TEAL,borderWidth:1,borderRadius:4}]},options:{...chartOpts(),plugins:{legend:{display:false}}}});
+}
+
+// ─── Full bag with estimated clubs ───
+const FULL_BAG = ['Driver','3 Wood','3 Hybrid','4 Iron','5 Iron','6 Iron','7 Iron','8 Iron','9 Iron','PW','UW','SW'];
+const BAG_ORDER = Object.fromEntries(FULL_BAG.map((c,i) => [c, i]));
+
+function buildFullBag(allShots) {
+  const cm = {}; allShots.filter(s => s.filtered).forEach(s => { (cm[s.club] = cm[s.club] || []).push(s); });
+  const real = {};
+  for (const [club, shots] of Object.entries(cm)) {
+    const c = shots.filter(s => s.carry != null).map(s => s.carry);
+    const t = shots.filter(s => s.total != null).map(s => s.total);
+    const sp = shots.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
+    const sn = shots.filter(s => s.spinRate != null).map(s => s.spinRate);
+    if (!c.length) continue;
+    const rollout = {'Driver':1.14,'3 Wood':1.10,'3 Hybrid':1.08,'4 Iron':1.06,'5 Iron':1.05,
+      '6 Iron':1.04,'7 Iron':1.03,'8 Iron':1.02,'9 Iron':1.015,'PW':1.005,'UW':1.0,'SW':1.0,'LW':1.0,'GW':1.0};
+    real[club] = { club, carryAvg: avg(c), totalAvg: t.length ? avg(t) : avg(c) * (rollout[club] || 1.03),
+      carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn), shotCount: c.length, estimated: false };
+  }
+
+  // Build sorted list of known clubs in bag order
+  const known = Object.values(real).sort((a, b) => (BAG_ORDER[a.club] ?? 99) - (BAG_ORDER[b.club] ?? 99));
+  if (known.length < 2) return known;
+
+  // Interpolate missing clubs between the first and last known club
+  const firstIdx = BAG_ORDER[known[0].club] ?? 0;
+  const lastIdx = BAG_ORDER[known[known.length - 1].club] ?? FULL_BAG.length - 1;
+  const result = [];
+
+  for (let i = firstIdx; i <= lastIdx; i++) {
+    const club = FULL_BAG[i];
+    if (real[club]) { result.push(real[club]); continue; }
+
+    // Find nearest known clubs above and below in bag order
+    let above = null, below = null;
+    for (let j = i - 1; j >= 0; j--) { if (real[FULL_BAG[j]]) { above = real[FULL_BAG[j]]; break; } }
+    for (let j = i + 1; j < FULL_BAG.length; j++) { if (real[FULL_BAG[j]]) { below = real[FULL_BAG[j]]; break; } }
+
+    if (above && below) {
+      const aIdx = BAG_ORDER[above.club], bIdx = BAG_ORDER[below.club];
+      const t = (i - aIdx) / (bIdx - aIdx);
+      result.push({
+        club, estimated: true, shotCount: 0,
+        carryAvg: above.carryAvg + t * (below.carryAvg - above.carryAvg),
+        totalAvg: above.totalAvg + t * (below.totalAvg - above.totalAvg),
+        carryStd: 0, ballSpeedAvg: above.ballSpeedAvg + t * (below.ballSpeedAvg - above.ballSpeedAvg),
+        spinRateAvg: above.spinRateAvg + t * (below.spinRateAvg - above.spinRateAvg),
+      });
+    }
+  }
+  return result;
+}
+
+function updateYardageChart(allShots) {
+  const bag = buildFullBag(allShots);
+  if (charts.yardage) charts.yardage.destroy(); if (!bag.length) return;
+  // Compute gaps
+  for (let i = 0; i < bag.length - 1; i++) bag[i].gap = bag[i].carryAvg - bag[i + 1].carryAvg;
+  const colors = bag.map(s => s.estimated ? '#3a4550' : GREEN);
+  const borderColors = bag.map(s => s.estimated ? '#2a3540' : GREEN);
+  const ctx = document.getElementById('yardageChart'); if (!ctx) return;
+  charts.yardage = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: bag.map(s => s.club),
+      datasets: [{
+        label: 'Carry', data: bag.map(s => +s.carryAvg.toFixed(0)),
+        backgroundColor: colors.map(c => c + 'cc'), borderColor: borderColors, borderWidth: 1, borderRadius: 6,
+      }]
+    },
+    options: {
+      ...chartOpts(),
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const b = bag[ctx.dataIndex];
+          return `Carry: ${b.carryAvg.toFixed(0)} | Total: ${b.totalAvg.toFixed(0)}${b.estimated ? ' (est)' : ''}`;
+        }}},
+        // Datalabels via custom plugin
+      },
+      scales: {
+        x: { ticks: { color: (ctx) => TEXT3, font: { size: 10 } }, grid: { display: false } },
+        y: { min: 0, max: 300, ticks: { color: TEXT3, font: { size: 10 } }, grid: { color: BORDER } }
+      }
+    },
+    plugins: [{
+      id: 'barLabels',
+      afterDatasetsDraw(chart) {
+        const { ctx: c, data, chartArea } = chart;
+        chart.getDatasetMeta(0).data.forEach((bar, i) => {
+          const b = bag[i];
+          c.save();
+          c.textAlign = 'center';
+          c.font = 'bold 11px -apple-system, sans-serif';
+          c.fillStyle = b.estimated ? '#6e7681' : GREEN;
+          c.fillText(b.carryAvg.toFixed(0), bar.x, bar.y - 14);
+          c.font = '9px -apple-system, sans-serif';
+          c.fillStyle = TEXT3;
+          c.fillText(b.totalAvg.toFixed(0) + 't', bar.x, bar.y - 3);
+          c.restore();
+        });
+      }
+    }]
+  });
+}
+
+function updateYardageTable(allShots) {
+  const bag = buildFullBag(allShots);
+  for (let i = 0; i < bag.length - 1; i++) bag[i].gap = bag[i].carryAvg - bag[i + 1].carryAvg;
+  document.getElementById('yardageTable').innerHTML = `<tr><th style="text-align:left">Club</th><th>Carry</th><th>Total</th><th>Std</th><th>Speed</th><th>Spin</th><th>Shots</th><th>Gap</th></tr>
+    ${bag.map(s => {
+      const cls = s.estimated ? ' class="estimated"' : '';
+      const badge = s.estimated ? '<span class="est-badge">EST</span>' : '';
+      return `<tr${cls}><td style="text-align:left;font-weight:600">${s.club}${badge}</td>
+        <td class="carry-cell">${s.carryAvg.toFixed(1)}</td><td>${s.totalAvg.toFixed(0)}</td>
+        <td style="color:${TEXT2}">${s.estimated ? '--' : s.carryStd.toFixed(1)}</td>
+        <td>${s.ballSpeedAvg.toFixed(0)}</td><td>${Math.round(s.spinRateAvg)}</td>
+        <td style="color:${TEXT3}">${s.estimated ? '--' : s.shotCount}</td>
+        <td class="gap-cell">${s.gap ? s.gap.toFixed(0) : '--'}</td></tr>`;
+    }).join('')}`;
+}
+
+function updateScatterChart(allShots) {
+  const pts=allShots.filter(s=>s.filtered&&s.club===selectedClub&&s.carry!=null&&s.offline!=null).map(s=>({x:s.offline,y:s.carry}));
+  if (charts.scatter) charts.scatter.destroy(); if (!pts.length) return;
+  const ctx=document.getElementById('scatterChart'); if (!ctx) return;
+  charts.scatter=new Chart(ctx,{type:'scatter',data:{datasets:[{data:pts,backgroundColor:PURPLE+'66',borderColor:PURPLE,pointRadius:3,pointHoverRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`Carry: ${ctx.parsed.y.toFixed(1)} | Offline: ${ctx.parsed.x.toFixed(1)}`}}},
+    scales:{x:{title:{display:true,text:'Offline (yds)',color:TEXT3,font:{size:11}},ticks:{color:TEXT3},grid:{color:BORDER}},y:{title:{display:true,text:'Carry (yds)',color:TEXT3,font:{size:11}},ticks:{color:TEXT3},grid:{color:BORDER}}}}});
+}
+
+function updateSessionTable(sessions) {
+  const sess=sessions.filter(s=>s.club===selectedClub).sort((a,b)=>a.date.localeCompare(b.date));
+  document.getElementById('sessionTable').innerHTML=`<tr><th style="text-align:left">Date</th><th>Ball</th><th>Carry</th><th>Std</th><th>Speed</th><th>Spin</th><th>Launch</th><th>Shots</th></tr>
+    ${sess.map(s=>`<tr><td>${s.date.replace(/-2026$/,'')}</td><td style="color:${TEXT3};font-size:11px">${s.ballType||''}</td><td style="font-weight:600;color:${GREEN}">${s.carryAvg.toFixed(1)}</td><td>${s.carryStd.toFixed(1)}</td>
+    <td>${s.ballSpeedAvg.toFixed(1)}</td><td>${Math.round(s.spinRateAvg)}</td><td>${s.launchAngleAvg.toFixed(1)}&deg;</td><td style="color:${TEXT3}">${s.shotCount}</td></tr>`).join('')}`;
+}
+
+// ─── Progress Tab ───
+function linearTrend(data) {
+  const valid=data.map((v,i)=>[i,v]).filter(([_,v])=>v!=null); if(valid.length<2) return data.map(()=>null);
+  const n=valid.length, sx=valid.reduce((s,[x])=>s+x,0), sy=valid.reduce((s,[_,y])=>s+y,0),
+    sxy=valid.reduce((s,[x,y])=>s+x*y,0), sx2=valid.reduce((s,[x])=>s+x*x,0);
+  const slope=(n*sxy-sx*sy)/(n*sx2-sx*sx), intercept=(sy-slope*sx)/n;
+  return data.map((_,i)=>+(slope*i+intercept).toFixed(1));
+}
+
+let progressMetric = 'carry'; // carry, dispersion, consistency, speed, spin, launch, clubPath, faceAngle
+
+const PROGRESS_METRICS = {
+  carry:      { key: 'carryAvg',       label: 'Carry',       color: GREEN,  unit: 'yds', hib: true, dec: 1 },
+  dispersion: { key: 'offlineAbsAvg',  label: 'Dispersion',  color: ORANGE, unit: 'yds', hib: false, dec: 1, reverse: true, yLabel: 'yards (lower = tighter)' },
+  consistency:{ key: 'carryStd',       label: 'Consistency',  color: RED,    unit: 'yds', hib: false, dec: 1, reverse: true, yLabel: 'yards (lower = more consistent)' },
+  speed:      { key: 'ballSpeedAvg',   label: 'Ball Speed',  color: BLUE,   unit: 'mph', hib: true, dec: 1 },
+  spin:       { key: 'spinRateAvg',    label: 'Spin Rate',   color: GOLD,   unit: 'rpm', hib: false, dec: 0 },
+  launch:     { key: 'launchAngleAvg', label: 'Launch',      color: TEAL,   unit: '°', hib: false, dec: 1 },
+  clubPath:   { key: 'clubPathAvg',    label: 'Club Path',   color: PURPLE, unit: '°', hib: false, dec: 1, yLabel: 'degrees (0 = square)' },
+  faceAngle:  { key: 'faceAngleAvg',   label: 'Face Angle',  color: PINK,   unit: '°', hib: false, dec: 1, yLabel: 'degrees (0 = square)' },
+};
+
+function selectProgressMetric(m) {
+  progressMetric = m;
+  updateProgressTab();
+}
+
+function updateProgressTab() {
+  const allSess = DATA.sessions.filter(s => s.club === selectedClub).sort((a, b) => a.date.localeCompare(b.date));
+  if (allSess.length < 2) {
+    document.getElementById('trendSummary').innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px">Need 2+ sessions for progress.</div>';
+    if (charts.progress) { charts.progress.destroy(); delete charts.progress; }
+    return;
+  }
+
+  // Build per-session metrics
+  const sm = allSess.map(sess => {
+    const shots = DATA.shots.filter(s => s.filtered && s.club === sess.club && s.date === sess.date);
+    const off = shots.filter(s => s.offline != null).map(s => s.offline);
+    return {
+      date: sess.date, label: sess.date.replace(/-2026$/, ''),
+      carryAvg: sess.carryAvg, carryStd: sess.carryStd, ballSpeedAvg: sess.ballSpeedAvg,
+      spinRateAvg: sess.spinRateAvg, launchAngleAvg: sess.launchAngleAvg,
+      clubPathAvg: sess.clubPathAvg, faceAngleAvg: sess.faceAngleAvg,
+      offlineAbsAvg: off.length ? avg(off.map(Math.abs)) : null,
+      shotCount: sess.shotCount,
+    };
+  });
+
+  const half = Math.floor(sm.length / 2);
+  const first3 = sm.slice(0, Math.min(3, half || 1));
+  const last3 = sm.slice(-Math.min(3, sm.length - half || 1));
+
+  function td(mKey) {
+    const m = PROGRESS_METRICS[mKey];
+    const f = first3.filter(s => s[m.key] != null).map(s => s[m.key]);
+    const l = last3.filter(s => s[m.key] != null).map(s => s[m.key]);
+    if (!f.length || !l.length) return { current: '--', delta: 0, dir: 'flat' };
+    const fa = avg(f), la = avg(l), d = la - fa, pct = fa ? d / Math.abs(fa) * 100 : 0;
+    return { current: la, delta: d, pct, dir: Math.abs(pct) < 2 ? 'flat' : (m.hib ? d > 0 : d < 0) ? 'up' : 'down' };
+  }
+
+  // Build summary cards — show all metrics as clickable
+  const metricsToShow = ['carry', 'dispersion', 'consistency', 'speed', 'spin', 'launch', 'clubPath', 'faceAngle'];
+  let html = '';
+  for (const mKey of metricsToShow) {
+    const m = PROGRESS_METRICS[mKey];
+    const d = td(mKey);
+    const sign = d.delta > 0 ? '+' : '';
+    const cls = d.dir === 'up' ? 'trend-up' : d.dir === 'down' ? 'trend-down' : 'trend-flat';
+    const arrow = d.dir === 'up' ? '&#9650;' : d.dir === 'down' ? '&#9660;' : '&#9644;';
+    const lbl = d.dir === 'up' ? 'Improving' : d.dir === 'down' ? 'Declining' : 'Stable';
+    const active = mKey === progressMetric ? `border:2px solid ${m.color};` : 'border:2px solid transparent;';
+    html += `<div class="trend-card" style="cursor:pointer;${active}" onclick="selectProgressMetric('${mKey}')">
+      <div class="trend-metric">${m.label}</div>
+      <div class="trend-values">
+        <span class="trend-current" style="color:${d.dir === 'up' ? GREEN : d.dir === 'down' ? RED : TEXT2}">${typeof d.current === 'number' ? d.current.toFixed(m.dec) : d.current}</span>
+        <span class="trend-delta ${cls}">${arrow} ${sign}${typeof d.delta === 'number' ? d.delta.toFixed(m.dec) : d.delta}</span>
+      </div>
+      <div class="trend-context">${lbl}</div>
+    </div>`;
+  }
+  document.getElementById('trendSummary').innerHTML = html;
+
+  // Draw chart for selected metric
+  const m = PROGRESS_METRICS[progressMetric];
+  const labels = sm.map(s => s.label);
+  const data = sm.map(s => s[m.key] != null ? +(+s[m.key]).toFixed(m.dec) : null);
+
+  document.getElementById('progressChartTitle').textContent = m.label + ' Over Time';
+  if (charts.progress) charts.progress.destroy();
+  const opts = { ...chartOpts() };
+  if (m.reverse) {
+    opts.scales = { ...opts.scales, y: { ...opts.scales.y, reverse: true, title: { display: true, text: m.yLabel || '', color: TEXT3, font: { size: 10 } } } };
+  } else if (m.yLabel) {
+    opts.scales = { ...opts.scales, y: { ...opts.scales.y, title: { display: true, text: m.yLabel, color: TEXT3, font: { size: 10 } } } };
+  }
+
+  charts.progress = new Chart(document.getElementById('progressChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: m.label, data, borderColor: m.color, backgroundColor: m.color + '22', tension: 0.3, fill: true, pointRadius: 5, pointBackgroundColor: m.color, borderWidth: 2 },
+        { label: 'Trend', data: linearTrend(data), borderColor: GOLD, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, tension: 0 },
+      ]
+    },
+    options: opts,
+  });
+}
+
+// ─── Data Management Tab ───
+async function updateManageTab() {
+  const stored = await getAllSessions();
+  const el = document.getElementById('manageList');
+  if (!stored.length) { el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:8px">No sessions imported yet.</div>'; return; }
+
+  // Group sessions by date and show ball type per date
+  const dateFiles = {};
+  for (const s of stored) {
+    const first = s.content.split('\n')[0] || '';
+    const shots = first.includes('Shot Analysis')
+      ? parseShotAnalysisCSV(s.content, s.filename)
+      : parseDrivingRangeCSV(s.content, s.filename);
+    const dates = [...new Set(shots.map(sh => sh.date).filter(Boolean))];
+    for (const d of dates) { (dateFiles[d] = dateFiles[d] || []).push(s.filename); }
+  }
+
+  const savedBallTypes = JSON.parse(lsGet('ball-types'));
+  const allDates = Object.keys(dateFiles).sort();
+  const defaultTypes = ['tp5x', 'tp5', 'various', 'prov1', 'other'];
+  // Merge any custom ball types the user has used before
+  const customTypes = Object.values(savedBallTypes).filter(t => !defaultTypes.includes(t));
+  const knownBallTypes = [...defaultTypes, ...new Set(customTypes)];
+
+  let dateHtml = '<div style="margin-bottom:12px"><div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Ball Type by Session Date</div>';
+  for (const d of allDates) {
+    const bt = savedBallTypes[d] || BALL_TYPE_DEFAULTS[d] || DEFAULT_BALL_TYPE;
+    dateHtml += `<div class="manage-row" style="align-items:center">
+      <div class="manage-file">${d}</div>
+      <select class="filter-select" style="font-size:11px;padding:3px 6px" onchange="handleBallTypeSelect('${d}',this)">
+        ${knownBallTypes.map(t => `<option value="${t}" ${t === bt ? 'selected' : ''}>${t}</option>`).join('')}
+        <option value="__custom__">+ Custom...</option>
+      </select>
+    </div>`;
+  }
+  dateHtml += '</div>';
+
+  el.innerHTML = dateHtml + '<div style="font-size:11px;color:var(--text3);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.5px">Imported Files</div>' +
+    stored.sort((a,b) => a.filename.localeCompare(b.filename)).map(s => {
+    const lines = s.content.split('\n').filter(l => l.trim()).length;
+    return `<div class="manage-row">
+      <div class="manage-file">${s.filename}</div>
+      <div class="manage-meta">~${lines} rows</div>
+      <button class="manage-del" onclick="removeSession('${s.filename.replace(/'/g,"\\'")}')">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+function handleBallTypeSelect(date, selectEl) {
+  if (selectEl.value === '__custom__') {
+    const custom = prompt('Enter ball type name:');
+    if (custom && custom.trim()) {
+      setBallType(date, custom.trim().toLowerCase());
+    } else {
+      // Reset to current value
+      const saved = JSON.parse(lsGet('ball-types'));
+      selectEl.value = saved[date] || BALL_TYPE_DEFAULTS[date] || DEFAULT_BALL_TYPE;
+    }
+  } else {
+    setBallType(date, selectEl.value);
+  }
+}
+
+async function setBallType(date, type) {
+  const saved = JSON.parse(lsGet('ball-types'));
+  saved[date] = type;
+  lsSet('ball-types', JSON.stringify(saved));
+  showToast(`${date} → ${type}`);
+  await rebuildData();
+}
+
+// ─── Server Sync ───
+async function syncFromServer() {
+  try {
+    const res = await fetch('sessions.json');
+    if (!res.ok) { showToast('Server not reachable'); return; }
+    const files = await res.json();
+    const stored = await getAllSessions();
+    const existing = new Set(stored.map(s => s.filename));
+    const newFiles = files.filter(f => !existing.has(f));
+    if (!newFiles.length) { showToast('Already up to date'); return; }
+    let loaded = 0;
+    for (const filename of newFiles) {
+      const r = await fetch('sessions/' + encodeURIComponent(filename));
+      if (!r.ok) continue;
+      const content = await r.text();
+      await saveSession(filename, content);
+      loaded++;
+    }
+    showToast(`Synced ${loaded} new file${loaded !== 1 ? 's' : ''}`);
+    await rebuildData();
+  } catch (e) { showToast('Sync failed — is server running?'); }
+}
+
+// ─── Hard Refresh ───
+async function hardRefresh() {
+  showToast('Refreshing...');
+  // Clear service worker caches
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(k => caches.delete(k)));
+  }
+  // Unregister service workers so fresh one installs on reload
+  if ('serviceWorker' in navigator) {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r => r.unregister()));
+  }
+  // Force reload from server (bypass cache)
+  window.location.reload(true);
+}
+
+// ─── Theme Toggle ───
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  localStorage.setItem('g730-theme', next);
+  updateThemeIcon(next);
+  applyThemeMeta(next);
+  // Update Chart.js colors for theme
+  updateChartColors(next);
+}
+
+function updateThemeIcon(theme) {
+  const icon = document.getElementById('themeIcon');
+  if (!icon) return;
+  if (theme === 'light') {
+    // Moon icon for "switch to dark"
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    // Sun icon for "switch to light"
+    icon.innerHTML = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>';
+  }
+}
+
+function updateChartColors(theme) {
+  // Re-read CSS variables for chart constants
+  const style = getComputedStyle(document.documentElement);
+  // No need to reassign JS constants — charts re-render from updateDashboard using CSS vars
+  // Just trigger a re-render
+  if (DATA) updateDashboard();
+}
+
+function applyThemeMeta(theme) {
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#0d1117');
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('g730-theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', saved);
+  updateThemeIcon(saved);
+  applyThemeMeta(saved);
+}
+initTheme();
+
+// ─── iOS Install Banner ───
+function showInstallBanner() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  const dismissed = localStorage.getItem('g730-install-dismissed');
+  if (!isIOS || isStandalone || dismissed) return;
+  const banner = document.createElement('div');
+  banner.className = 'install-banner';
+  banner.innerHTML = `<div class="install-banner-icon">G7</div><div class="install-banner-text">
+    <div class="install-banner-title">Add Swing Doctor to Home Screen</div>
+    <div class="install-banner-sub">Tap <strong style="font-size:16px">&#9769;</strong> then "Add to Home Screen"</div></div>
+    <button class="install-banner-close" onclick="dismissInstallBanner()">&times;</button>`;
+  document.body.appendChild(banner);
+}
+function dismissInstallBanner() { const b=document.querySelector('.install-banner'); if(b)b.remove(); localStorage.setItem('g730-install-dismissed','1'); }
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+init();
+showInstallBanner();
+</script>
 </body>
 </html>

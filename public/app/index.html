@@ -5,33 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" content="#0a0f0a">
-<meta name="apple-mobile-web-app-title" content="SwingDoctor">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-title" content="Swing Doctor">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>SwingDoctor</title>
+<title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root, [data-theme="dark"] {
-    --bg: #0a0f0a; --bg2: #111a11; --bg3: #162016;
-    --text: #f0f4f0; --text2: #9ca89c; --text3: #6b7b6b;
-    --accent: #10b981; --accent2: #059669; --green: #10b981; --green2: #059669;
-    --blue: #10b981; --gold: #d4a843; --teal: #2ea99a;
-    --border: #1a2e1a; --red: #f85149; --orange: #d18616;
-    --purple: #a78bfa; --pink: #f472b6;
+    --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
+    --text: #e6edf3; --text2: #8b949e; --text3: #6e7681;
+    --accent: #58a6ff; --accent2: #388bfd; --green: #3fb950; --green2: #238636;
+    --blue: #58a6ff; --gold: #d29922; --teal: #2ea99a;
+    --border: #30363d; --red: #f85149; --orange: #d18616;
+    --purple: #bc8cff; --pink: #f778ba;
   }
   [data-theme="light"] {
-    --bg: #f8faf8; --bg2: #eef2ee; --bg3: #dfe6df;
-    --text: #1a2e1a; --text2: #4a5a4a; --text3: #6b7b6b;
-    --accent: #059669; --accent2: #047857; --green: #059669; --green2: #047857;
-    --blue: #059669; --gold: #92790c; --teal: #1b7c83;
-    --border: #c8d4c8; --red: #dc2626; --orange: #c2410c;
-    --purple: #7c3aed; --pink: #db2777;
+    --bg: #ffffff; --bg2: #f6f8fa; --bg3: #e8ecf0;
+    --text: #1f2328; --text2: #656d76; --text3: #8b949e;
+    --accent: #0969da; --accent2: #0550ae; --green: #1a7f37; --green2: #1a7f37;
+    --blue: #0969da; --gold: #9a6700; --teal: #1b7c83;
+    --border: #d0d7de; --red: #cf222e; --orange: #bc4c00;
+    --purple: #8250df; --pink: #bf3989;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', system-ui, sans-serif;
     background: var(--bg); color: var(--text);
     -webkit-font-smoothing: antialiased;
     padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom) 0;
@@ -48,7 +47,7 @@
   }
   .hdr-btn:active { background: var(--accent2); color: #fff; }
   .hdr-btn.icon-only { padding: 6px 8px; }
-  .hdr-btn.import-btn { border-color: var(--green); color: var(--green); }
+  .hdr-btn.import-btn { border-color: var(--accent); }
   .subtitle { font-size: 11px; color: var(--text3); margin-bottom: 12px; }
 
   .filters { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; }
@@ -221,17 +220,14 @@
 </head>
 <body>
 <div class="loading-overlay" id="loadingOverlay">
-  <div>Loading SwingDoctor...</div>
+  <div>Loading Swing Doctor...</div>
 </div>
 <div class="toast" id="toast"></div>
 <input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
 
 <div class="container">
   <div class="header">
-    <h1 style="display:flex;align-items:center;gap:8px">
-      <img src="/App_icon.png" alt="" style="width:28px;height:28px;border-radius:6px">
-      <img src="/WordArt-white.png" alt="SwingDoctor" style="height:20px">
-    </h1>
+    <h1>Swing Doctor</h1>
     <div class="header-btns" style="position:relative">
       <div class="profile-avatar" id="profileAvatar" onclick="toggleProfileMenu()" title="Profile"></div>
       <div class="profile-menu hidden" id="profileMenu">
@@ -282,29 +278,6 @@
     </div>
 
     <div id="tab-overview">
-      <!-- Quick Actions -->
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <button class="hdr-btn" onclick="quickCoach('diagnosis')" style="flex:1;justify-content:center;padding:10px;min-width:100px;border-color:var(--green);color:var(--green)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          Diagnosis
-        </button>
-        <button class="hdr-btn" onclick="quickCoach('drills')" style="flex:1;justify-content:center;padding:10px;min-width:100px;border-color:var(--gold);color:var(--gold)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-          Drills
-        </button>
-        <button class="hdr-btn" onclick="quickCoach('ball')" style="flex:1;justify-content:center;padding:10px;min-width:100px;border-color:var(--purple);color:var(--purple)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
-          Ball Rec
-        </button>
-      </div>
-      <!-- Quick coach result area -->
-      <div id="quickCoachResult" class="card" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div class="card-title" id="quickCoachTitle"></div>
-          <button onclick="document.getElementById('quickCoachResult').style.display='none'" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:18px">&times;</button>
-        </div>
-        <div id="quickCoachBody" style="font-size:13px;line-height:1.7;color:var(--text)"></div>
-      </div>
       <div class="card"><div class="card-title">Session Carry Trend</div><div class="chart-wrap"><canvas id="trendChart"></canvas></div></div>
       <div class="card"><div class="card-title">Carry Distribution</div><div class="chart-wrap"><canvas id="distChart"></canvas></div></div>
     </div>
@@ -418,6 +391,36 @@
         <div id="ballList"></div>
         <button class="add-btn" onclick="addBallType()">+ Add Ball</button>
       </div>
+      <div class="card" id="cloudAccountCard">
+        <div class="card-title">Swing Doctor Cloud</div>
+        <div id="cloudNotConnected">
+          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px">
+            Create a free account to unlock cloud sync, AI coaching, and access your data from any device.
+          </div>
+          <div id="cloudAuthForm">
+            <input id="cloudEmail" class="bag-brand" type="email" placeholder="Email" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudPassword" class="bag-brand" type="password" placeholder="Password (8+ chars)" style="width:100%;margin-bottom:6px;padding:8px 10px">
+            <input id="cloudName" class="bag-brand" placeholder="Display Name" style="width:100%;margin-bottom:8px;padding:8px 10px">
+            <div style="display:flex;gap:6px">
+              <button class="hdr-btn import-btn" onclick="cloudSignUp()" style="flex:1;justify-content:center;padding:8px">Create Account</button>
+              <button class="hdr-btn" onclick="cloudSignIn()" style="flex:1;justify-content:center;padding:8px">Sign In</button>
+            </div>
+            <div id="cloudAuthError" style="font-size:11px;color:var(--red);margin-top:6px;min-height:16px"></div>
+          </div>
+        </div>
+        <div id="cloudConnected" style="display:none">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+            <span style="font-size:12px;color:var(--green);font-weight:600">Connected</span>
+            <span id="cloudEmailDisplay" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
+          </div>
+          <div id="cloudTier" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
+          <div style="display:flex;gap:6px">
+            <button class="hdr-btn" onclick="cloudUpgradeOrManage()" id="cloudUpgradeBtn" style="flex:1;justify-content:center;padding:8px">Upgrade to Pro</button>
+            <button class="hdr-btn" onclick="cloudLogout()" style="justify-content:center;padding:8px;color:var(--text3)">Log Out</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -431,7 +434,7 @@
     </div>
   </div>
 
-  <div class="footer">SwingDoctor &middot; Your data should coach you.</div>
+  <div class="footer">Swing Doctor &middot; Your data should coach you.</div>
 </div>
 
 <script>
@@ -444,27 +447,15 @@
 // Provides cloud sync when backend is available.
 // Falls back gracefully to local-only mode.
 const API = {
-  BASE: (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
-    ? 'http://localhost:8000/api/v1'
-    : 'https://swing-doctor-api.fly.dev/api/v1',
+  BASE: 'https://api.swing.doctor/api/v1',
   token: null,
   refreshToken: null,
-  enabled: false,
+  enabled: false, // set true once user logs in to cloud
 
   init() {
-    // Check both token key formats (signup page uses sd_access_token, app uses sd-api-token)
-    this.token = localStorage.getItem('sd_access_token') || localStorage.getItem('sd-api-token');
-    this.refreshToken = localStorage.getItem('sd_refresh_token') || localStorage.getItem('sd-api-refresh');
+    this.token = localStorage.getItem('sd-api-token');
+    this.refreshToken = localStorage.getItem('sd-api-refresh');
     this.enabled = !!this.token;
-    // Normalize to one key format
-    if (this.token) {
-      localStorage.setItem('sd_access_token', this.token);
-      localStorage.setItem('sd-api-token', this.token);
-    }
-    if (this.refreshToken) {
-      localStorage.setItem('sd_refresh_token', this.refreshToken);
-      localStorage.setItem('sd-api-refresh', this.refreshToken);
-    }
   },
 
   setTokens(access, refresh) {
@@ -473,8 +464,6 @@ const API = {
     this.enabled = true;
     localStorage.setItem('sd-api-token', access);
     localStorage.setItem('sd-api-refresh', refresh);
-    localStorage.setItem('sd_access_token', access);
-    localStorage.setItem('sd_refresh_token', refresh);
   },
 
   clearTokens() {
@@ -483,83 +472,11 @@ const API = {
     this.enabled = false;
     localStorage.removeItem('sd-api-token');
     localStorage.removeItem('sd-api-refresh');
-    localStorage.removeItem('sd_access_token');
-    localStorage.removeItem('sd_refresh_token');
     localStorage.removeItem('sd-api-profile-id');
   },
 
   getProfileId() { return localStorage.getItem('sd-api-profile-id'); },
   setProfileId(id) { localStorage.setItem('sd-api-profile-id', id); },
-
-  // Fetch sessions from cloud API and return as local-compatible format
-  async getCloudSessions() {
-    if (!this.enabled) return null;
-    try {
-      // Get profile ID if we don't have it
-      let profileId = this.getProfileId();
-      if (!profileId) {
-        const profileRes = await this._fetch('/profiles');
-        if (!profileRes.ok) return null;
-        const profiles = await profileRes.json();
-        if (!profiles.length) return null;
-        profileId = profiles[0].id;
-        this.setProfileId(profileId);
-      }
-
-      // Fetch all sessions with shots
-      const sessRes = await this._fetch(`/sessions?profile_id=${profileId}&page_size=100`);
-      if (!sessRes.ok) return null;
-      const sessData = await sessRes.json();
-      const sessions = sessData.sessions || sessData;
-      if (!sessions.length) return null;
-
-      // Fetch each session's shots
-      const allSessions = [];
-      for (const sess of sessions) {
-        const detailRes = await this._fetch(`/sessions/${sess.id}`);
-        if (!detailRes.ok) continue;
-        const detail = await detailRes.json();
-        // Convert to local format
-        const shots = (detail.shots || []).map(shot => ({
-          club: shot.club_name,
-          date: shot.shot_date,
-          ballSpeed: shot.ball_speed_mph ? parseFloat(shot.ball_speed_mph) : null,
-          launchAngle: shot.launch_angle_deg ? parseFloat(shot.launch_angle_deg) : null,
-          launchDirection: shot.launch_direction_deg ? parseFloat(shot.launch_direction_deg) : null,
-          spinRate: shot.spin_rate_rpm,
-          spinAxis: shot.spin_axis_deg ? parseFloat(shot.spin_axis_deg) : null,
-          backSpin: shot.back_spin_rpm,
-          sideSpin: shot.side_spin_rpm,
-          clubSpeed: shot.club_speed_mph ? parseFloat(shot.club_speed_mph) : null,
-          smashFactor: shot.smash_factor ? parseFloat(shot.smash_factor) : null,
-          attackAngle: shot.attack_angle_deg ? parseFloat(shot.attack_angle_deg) : null,
-          clubPath: shot.club_path_deg ? parseFloat(shot.club_path_deg) : null,
-          faceAngle: shot.face_angle_deg ? parseFloat(shot.face_angle_deg) : null,
-          dynamicLoft: shot.dynamic_loft_deg ? parseFloat(shot.dynamic_loft_deg) : null,
-          carry: shot.carry_yards ? parseFloat(shot.carry_yards) : null,
-          total: shot.total_yards ? parseFloat(shot.total_yards) : null,
-          offline: shot.offline_yards ? parseFloat(shot.offline_yards) : null,
-          apex: shot.apex_feet ? parseFloat(shot.apex_feet) : null,
-          landingAngle: shot.landing_angle_deg ? parseFloat(shot.landing_angle_deg) : null,
-          hangTime: shot.hang_time_sec ? parseFloat(shot.hang_time_sec) : null,
-          filtered: shot.is_filtered !== false,
-          source: sess.source_file,
-          ballType: shot.ball_type || sess.ball_type || 'unknown',
-        }));
-        if (shots.length) {
-          allSessions.push({
-            filename: sess.source_file,
-            date: sess.session_date,
-            shots,
-          });
-        }
-      }
-      return allSessions;
-    } catch (e) {
-      console.warn('Cloud session fetch failed:', e);
-      return null;
-    }
-  },
 
   async _fetch(path, opts = {}) {
     const headers = { ...(opts.headers || {}) };
@@ -1285,76 +1202,6 @@ function processAllData(storedSessions) {
   };
 }
 
-// Process pre-parsed shots from cloud API (skips CSV parsing)
-function processAllData_fromShots(allShots, fileCount) {
-  // Add IDs and theoretical carry
-  allShots.forEach((s, i) => {
-    s.id = i;
-    s.rawTheoCarry = theoreticalCarry(s.ballSpeed, s.launchAngle, s.spinRate);
-    if (!s.ballType) s.ballType = 'unknown';
-  });
-
-  // Bottom 20% filter (if not already filtered by server)
-  const groups = {};
-  allShots.forEach(s => { const k = `${s.date}|${s.club}`; (groups[k] = groups[k] || []).push(s); });
-  for (const shots of Object.values(groups)) {
-    const wc = shots.filter(s => s.carry != null && s.carry > 0).sort((a,b) => a.carry - b.carry);
-    if (!wc.length) { shots.forEach(s => s.filtered = false); continue; }
-    const cutoff = wc[Math.floor(wc.length * 0.2)]?.carry ?? 0;
-    shots.forEach(s => { if (s.filtered === undefined) s.filtered = s.carry != null && s.carry >= cutoff; });
-  }
-
-  // Session summaries
-  const sessions = [];
-  for (const [key, shots] of Object.entries(groups)) {
-    const f = shots.filter(s => s.filtered); if (!f.length) continue;
-    const [date, club] = key.split('|');
-    const carries = f.filter(s => s.carry != null).map(s => s.carry);
-    const speeds = f.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
-    const spins = f.filter(s => s.spinRate != null).map(s => s.spinRate);
-    const launches = f.filter(s => s.launchAngle != null).map(s => s.launchAngle);
-    const offlines = f.filter(s => s.offline != null).map(s => s.offline);
-    sessions.push({ date, club, shotCount: f.length, ballType: f[0]?.ballType || 'unknown',
-      ballSpeedAvg: avg(speeds), carryAvg: avg(carries), carryStd: std(carries),
-      carryMin: carries.length ? Math.min(...carries) : 0,
-      carryMax: carries.length ? Math.max(...carries) : 0, carryMed: median(carries),
-      launchAngleAvg: avg(launches), spinRateAvg: avg(spins),
-      offlineAvg: avg(offlines), offlineAbsAvg: offlines.length ? avg(offlines.map(Math.abs)) : 0,
-      leftPct: offlines.length ? offlines.filter(o => o < 0).length / offlines.length : 0,
-      rightPct: offlines.length ? offlines.filter(o => o > 0).length / offlines.length : 0,
-    });
-  }
-
-  // Club summaries
-  const clubMap = {};
-  allShots.filter(s => s.filtered).forEach(s => { (clubMap[s.club] = clubMap[s.club] || []).push(s); });
-  const clubSummaries = [];
-  for (const [club, shots] of Object.entries(clubMap)) {
-    const carries = shots.filter(s => s.carry != null).map(s => s.carry);
-    const speeds = shots.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
-    const spins = shots.filter(s => s.spinRate != null).map(s => s.spinRate);
-    if (!carries.length) continue;
-    clubSummaries.push({ club, ballSpeedAvg: avg(speeds), carryAvg: avg(carries), carryMed: median(carries),
-      carryStd: std(carries), spinRateAvg: avg(spins), shotCount: shots.length, gap: null });
-  }
-  clubSummaries.sort((a,b) => b.carryAvg - a.carryAvg);
-  for (let i = 0; i < clubSummaries.length - 1; i++) clubSummaries[i].gap = clubSummaries[i].carryAvg - clubSummaries[i+1].carryAvg;
-
-  const paired = allShots.filter(s => s.filtered && s.carry != null && s.rawTheoCarry != null);
-  let correlation = 0, rmse = 0, offset = 0;
-  if (paired.length > 1) {
-    const a = paired.map(s => s.carry), t = paired.map(s => s.rawTheoCarry);
-    correlation = pearsonR(a, t); offset = avg(a) - avg(t);
-    rmse = Math.sqrt(avg(paired.map(s => (s.carry - s.rawTheoCarry)**2)));
-  }
-
-  return { shots: allShots, sessions, clubSummaries,
-    calibration: { elevation: ELEVATION, airDensity: 1.225 * Math.exp(-ELEVATION*0.3048/8500), offset, correlation, rmse },
-    lastUpdated: new Date().toISOString(),
-    fileCount,
-  };
-}
-
 // ─── Rebuild from IndexedDB ───
 async function rebuildData() {
   const stored = await getAllSessions();
@@ -1402,6 +1249,95 @@ async function bootstrapFromServer() {
     }
     return loaded > 0;
   } catch (e) { return false; }
+}
+
+// ─── Cloud Account ───
+async function cloudSignUp() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const name = document.getElementById('cloudName').value.trim();
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
+  if (password.length < 8) { errEl.textContent = 'Password must be 8+ characters'; return; }
+  if (!name) { errEl.textContent = 'Display name required'; return; }
+
+  try {
+    await API.register(email, password, name);
+    updateCloudUI();
+    showToast('Account created!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+async function cloudSignIn() {
+  const email = document.getElementById('cloudEmail').value.trim();
+  const password = document.getElementById('cloudPassword').value;
+  const errEl = document.getElementById('cloudAuthError');
+  errEl.textContent = '';
+
+  if (!email) { errEl.textContent = 'Email required'; return; }
+  if (!password) { errEl.textContent = 'Password required'; return; }
+
+  try {
+    await API.login(email, password);
+    updateCloudUI();
+    showToast('Signed in!');
+  } catch (e) {
+    errEl.textContent = e.message;
+  }
+}
+
+function cloudLogout() {
+  API.clearTokens();
+  updateCloudUI();
+  showToast('Logged out');
+}
+
+async function cloudUpgradeOrManage() {
+  try {
+    const status = await API.getSubscriptionStatus();
+    if (status.is_active) {
+      await API.openBillingPortal();
+    } else {
+      // Default to pro monthly — in production, show plan picker
+      showToast('Stripe checkout not configured yet');
+    }
+  } catch (e) {
+    showToast('Billing: ' + e.message);
+  }
+}
+
+function updateCloudUI() {
+  const connected = document.getElementById('cloudConnected');
+  const notConnected = document.getElementById('cloudNotConnected');
+
+  if (API.enabled) {
+    connected.style.display = '';
+    notConnected.style.display = 'none';
+    // Decode email from JWT if available
+    try {
+      const payload = JSON.parse(atob(API.token.split('.')[1]));
+      document.getElementById('cloudEmailDisplay').textContent = payload.sub || '';
+    } catch { /* ignore */ }
+    // Check subscription status
+    API.getSubscriptionStatus().then(status => {
+      const tierEl = document.getElementById('cloudTier');
+      const btn = document.getElementById('cloudUpgradeBtn');
+      const tierNames = { free: 'Free', pro: 'Pro', pro_plus: 'Pro+', coach: 'Coach', academy: 'Academy' };
+      tierEl.textContent = `Plan: ${tierNames[status.tier] || status.tier}`;
+      if (status.tier !== 'free') {
+        btn.textContent = 'Manage Subscription';
+      } else {
+        btn.textContent = 'Upgrade to Pro';
+      }
+    }).catch(() => {});
+  } else {
+    connected.style.display = 'none';
+    notConnected.style.display = '';
+  }
 }
 
 // ─── AI Coach ───
@@ -1787,128 +1723,20 @@ async function runMigration(username) {
   if (oldBT) lsSet('ball-types', oldBT);
 }
 
-// ─── Quick Coach (overview buttons) ───
-function quickCoach(mode) {
-  if (!DATA || !DATA.shots.length) { showToast('Import some sessions first'); return; }
-
-  // Use filtered shots from the active date filter (defaults to most recent if set)
-  // If date filter is 'all', use only the most recent session date for coaching
-  let fs;
-  if (dateFilterMode === 'all') {
-    const dates = [...new Set(DATA.shots.filter(s => s.date).map(s => s.date))].sort();
-    const latestDate = dates[dates.length - 1];
-    fs = DATA.shots.filter(s => s.filtered && s.date === latestDate);
-    if (!fs.length) fs = DATA.shots.filter(s => s.filtered);
-  } else {
-    fs = getFilteredShots().filter(s => s.filtered);
-  }
-
-  const clubs = {};
-  fs.forEach(s => { (clubs[s.club] = clubs[s.club] || []).push(s); });
-
-  const resultEl = document.getElementById('quickCoachResult');
-  const titleEl = document.getElementById('quickCoachTitle');
-  const bodyEl = document.getElementById('quickCoachBody');
-
-  if (mode === 'diagnosis') {
-    const dates = [...new Set(fs.map(s => s.date))].sort();
-    const dateRange = dates.length === 1 ? dates[0] : `${dates[0]} to ${dates[dates.length-1]}`;
-    titleEl.textContent = `🩺 Swing Diagnosis — ${dateRange}`;
-    let html = '';
-
-    for (const [club, shots] of Object.entries(clubs).sort((a,b) => (({'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,'PW':17,'GW':18,'SW':19,'LW':20}[a[0]]||50) - (({'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,'PW':17,'GW':18,'SW':19,'LW':20}[b[0]]||50)))) {
-      if (shots.length < 5) continue;
-      const carries = shots.map(s=>s.carry).filter(Boolean);
-      const offlines = shots.map(s=>s.offline).filter(c=>c!=null);
-      const spins = shots.map(s=>s.spinRate).filter(Boolean);
-      const avgCarry = _avg(carries);
-      const stdCarry = _std(carries);
-      const stdOff = _std(offlines);
-      const leftPct = _pct(offlines, v=>v<0);
-      const avgSpin = _avg(spins);
-
-      const issues = [];
-      if (stdCarry > 10) issues.push(`<span style="color:var(--red)">⚠</span> Carry inconsistent (${stdCarry.toFixed(1)} yd spread)`);
-      if (stdOff > 15) issues.push(`<span style="color:var(--red)">⚠</span> Wide dispersion (${stdOff.toFixed(1)} yds)`);
-      if (leftPct > 70) issues.push(`<span style="color:var(--orange)">↙</span> Pull bias (${leftPct.toFixed(0)}% left)`);
-      else if (leftPct < 30) issues.push(`<span style="color:var(--orange)">↘</span> Push/slice (${(100-leftPct).toFixed(0)}% right)`);
-      if (avgSpin > 6500 && club.includes('Iron')) issues.push(`<span style="color:var(--orange)">🌀</span> High spin (${avgSpin.toFixed(0)} rpm)`);
-
-      const status = issues.length === 0 ? '<span style="color:var(--green)">✓</span>' : '';
-      html += `<div style="padding:8px 0;border-bottom:1px solid var(--border)">`;
-      html += `<div style="font-weight:600;margin-bottom:4px">${club} <span style="font-weight:400;color:var(--text3);font-size:12px">${shots.length} shots · avg ${avgCarry?.toFixed(0)||'—'} yds</span> ${status}</div>`;
-      if (issues.length) html += issues.map(i => `<div style="font-size:12px;padding:2px 0 2px 8px">${i}</div>`).join('');
-      else html += `<div style="font-size:12px;color:var(--green);padding:2px 0 2px 8px">Looking good — consistent and on target</div>`;
-      html += `</div>`;
-    }
-    bodyEl.innerHTML = html || '<div style="color:var(--text3)">Need more data for diagnosis</div>';
-
-  } else if (mode === 'drills') {
-    titleEl.textContent = `🎯 Recommended Drills (${fs.length} shots)`;
-    // Run the local coach to get drills, then display them
-    const hasDispersion = Object.values(clubs).some(shots => { const o = shots.map(s=>s.offline).filter(c=>c!=null); return _std(o) > 12; });
-    const hasConsistency = Object.values(clubs).some(shots => { const c = shots.map(s=>s.carry).filter(Boolean); return _std(c) > 10; });
-    const hasMiss = Object.values(clubs).some(shots => { const o = shots.map(s=>s.offline).filter(c=>c!=null); const lp = _pct(o, v=>v<0); return lp > 70 || lp < 30; });
-
-    let html = '';
-    if (hasConsistency) html += `<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;color:var(--gold);margin-bottom:4px">10-Shot Blocks</div><div style="font-size:12px">Hit 10 shots with the same club. Note avg carry and spread. Do 3 blocks per club. Goal: reduce spread by 3+ yards over 4 weeks.</div><div style="font-size:11px;color:var(--text3);margin-top:4px">⏱ 25 min · Focus: consistency</div></div>`;
-    if (hasDispersion) html += `<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;color:var(--gold);margin-bottom:4px">Gate Drill</div><div style="font-size:12px">Place two alignment sticks 10 yards apart at your avg carry. Hit 20 shots — track how many land between them. Start with your best club.</div><div style="font-size:11px;color:var(--text3);margin-top:4px">⏱ 20 min · Focus: accuracy</div></div>`;
-    if (hasMiss) html += `<div style="padding:10px 0;border-bottom:1px solid var(--border)"><div style="font-weight:600;color:var(--gold);margin-bottom:4px">Path Correction</div><div style="font-size:12px">Place a headcover 4" outside (pull) or inside (slice) the ball. Half swings avoiding it, then gradually go full. Forces your path to correct.</div><div style="font-size:11px;color:var(--text3);margin-top:4px">⏱ 15 min · Focus: swing path</div></div>`;
-    if (!html) html = `<div style="padding:10px 0"><div style="font-weight:600;color:var(--green);margin-bottom:4px">Stock Shot Routine</div><div style="font-size:12px">Your numbers look solid. Hit 10 shots per club through your bag focusing on tempo and target. Track any club that drops 5+ yards — that's your early warning.</div><div style="font-size:11px;color:var(--text3);margin-top:4px">⏱ 30 min · Focus: maintenance</div></div>`;
-    html += `<div style="margin-top:10px;font-size:11px;color:var(--text3)">For full AI coaching with personalized plans, use the AI Coach tab.</div>`;
-    bodyEl.innerHTML = html;
-
-  } else if (mode === 'ball') {
-    titleEl.textContent = `🏌️ Ball Recommendation (${fs.length} shots)`;
-    const allSpeeds = fs.map(s=>s.ballSpeed).filter(Boolean);
-    const allSpins = fs.map(s=>s.spinRate).filter(Boolean);
-    const avgSpeed = _avg(allSpeeds);
-    const avgSpin = _avg(allSpins);
-
-    let rec = '', reasoning = '';
-    if (!avgSpeed) {
-      bodyEl.innerHTML = '<div style="color:var(--text3)">Need ball speed data for recommendation</div>';
-      resultEl.style.display = '';
-      return;
-    }
-
-    if (avgSpeed > 150) {
-      rec = 'Titleist Pro V1x or TaylorMade TP5x';
-      reasoning = `Your ball speed (avg ${avgSpeed.toFixed(0)} mph) is tour-level. You generate enough speed to compress a high-compression ball and benefit from the lower spin off the driver for max distance. The firmer feel gives you better feedback on full shots.`;
-    } else if (avgSpeed > 130) {
-      rec = 'Titleist Pro V1 or TaylorMade TP5';
-      reasoning = `Your ball speed (avg ${avgSpeed.toFixed(0)} mph) is solid. A mid-compression tour ball gives you the best blend of distance off the tee and spin control around the greens. Avoid the "x" models unless you prefer a firmer feel.`;
-    } else if (avgSpeed > 110) {
-      rec = 'Callaway Chrome Soft or Bridgestone Tour B RX';
-      reasoning = `Your ball speed (avg ${avgSpeed.toFixed(0)} mph) is in the mid range. A softer tour ball helps you maximize compression without needing extreme swing speed. You'll get better feel on short game shots.`;
-    } else {
-      rec = 'Callaway Supersoft or Srixon Soft Feel';
-      reasoning = `Your ball speed (avg ${avgSpeed.toFixed(0)} mph) benefits from a low-compression ball that compresses easily. You'll get more distance and better feel than a firm tour ball.`;
-    }
-
-    if (avgSpin) {
-      if (avgSpin > 5500) reasoning += ` Your spin rate (${avgSpin.toFixed(0)} rpm avg) is on the high side — a lower-spin ball option could help reduce ballooning on full shots.`;
-      else if (avgSpin < 3000) reasoning += ` Your spin rate (${avgSpin.toFixed(0)} rpm avg) is low — prioritize a ball with good greenside spin to help shots hold the putting surface.`;
-    }
-
-    bodyEl.innerHTML = `<div style="font-size:16px;font-weight:700;color:var(--green);margin-bottom:8px">${rec}</div><div style="font-size:13px;line-height:1.6">${reasoning}</div><div style="margin-top:10px;padding:10px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text3)">💡 Buy a sleeve and bring it to your next sim session — we'll compare the numbers head to head.</div>`;
-  }
-
-  resultEl.style.display = '';
-}
-
 // ─── Init ───
 async function init() {
   try {
     let activeUser = getActiveUser();
     const profiles = getProfiles();
 
-    // First time: migrate old data if it exists
+    // Check if we need to migrate (no profiles exist but old DB might have data)
     if (!Object.keys(profiles).length) {
       const oldSessions = await migrateOldData();
       if (oldSessions.length) {
         createProfile('shane', 'Shane');
         await runMigration('shane');
+        setActiveUser('shane');
+        activeUser = 'shane';
       }
     }
 
@@ -1921,14 +1749,14 @@ async function init() {
       setActiveUser('shane');
       activeUser = 'shane';
     }
+    // Ensure all family profiles exist
+    const p = getProfiles();
+    if (!p['shane']) createProfile('shane', 'Shane');
+    if (!p['zach']) createProfile('zach', 'Zach');
+    if (!p['sam']) createProfile('sam', 'Sam');
+    if (!p['luke']) createProfile('luke', 'Luke');
 
-    // Ensure all family profiles exist (in case app was used before)
-    const existing = getProfiles();
-    if (!existing['shane']) createProfile('shane', 'Shane');
-    if (!existing['zach']) createProfile('zach', 'Zach');
-    if (!existing['sam']) createProfile('sam', 'Sam');
-    if (!existing['luke']) createProfile('luke', 'Luke');
-
+    // No active user or stale reference — pick the first profile
     if (!activeUser || !getProfiles()[activeUser]) {
       activeUser = Object.keys(getProfiles())[0];
       setActiveUser(activeUser);
@@ -2044,7 +1872,8 @@ function updateDashboard() {
   const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
   document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
   updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
-  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab(); }
+  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab(); updateCloudUI();
+}
 
 // ─── KPIs ───
 function updateKPIs(allShots) {
@@ -2494,7 +2323,7 @@ function showInstallBanner() {
   const banner = document.createElement('div');
   banner.className = 'install-banner';
   banner.innerHTML = `<div class="install-banner-icon">G7</div><div class="install-banner-text">
-    <div class="install-banner-title">Add SwingDoctor to Home Screen</div>
+    <div class="install-banner-title">Add Swing Doctor to Home Screen</div>
     <div class="install-banner-sub">Tap <strong style="font-size:16px">&#9769;</strong> then "Add to Home Screen"</div></div>
     <button class="install-banner-close" onclick="dismissInstallBanner()">&times;</button>`;
   document.body.appendChild(banner);

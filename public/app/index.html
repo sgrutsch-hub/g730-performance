@@ -11,6 +11,15 @@
 <title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+<script>
+// Load pdf.js globally
+window.pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs').then(mod => {
+  window.pdfjsLib = mod;
+  mod.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+  return mod;
+}).catch(() => null);
+</script>
 <style>
   :root, [data-theme="dark"] {
     --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
@@ -223,7 +232,7 @@
   <div>Loading Swing Doctor...</div>
 </div>
 <div class="toast" id="toast"></div>
-<input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
+<input type="file" id="fileInput" accept=".csv,.CSV,.pdf,.PDF" multiple style="display:none" onchange="handleFileImport(event)">
 
 <div class="container">
   <div class="header">
@@ -242,7 +251,7 @@
       <button class="hdr-btn icon-only" onclick="hardRefresh()" title="Refresh data &amp; reload">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
-      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV files">
+      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV or PDF files">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </button>
     </div>
@@ -432,7 +441,7 @@
     <div class="empty-state-sub">Import your launch monitor CSV files to get<br>clear diagnosis, coaching, and drills.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="import-big" onclick="syncFromServer()">Sync from Server</button>
-      <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSVs</button>
+      <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSV / PDF</button>
     </div>
   </div>
 
@@ -899,24 +908,58 @@ async function deleteSession(filename) {
 }
 
 // ─── File Import ───
+async function extractPdfText(file) {
+  await window.pdfjsReady;
+  if (!window.pdfjsLib) throw new Error('PDF reader not loaded');
+  const buf = await file.arrayBuffer();
+  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  let fullText = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const lines = [];
+    let lastY = null;
+    let currentLine = [];
+    // Group text items by Y position to reconstruct lines
+    for (const item of content.items) {
+      const y = Math.round(item.transform[5]);
+      if (lastY !== null && Math.abs(y - lastY) > 3) {
+        lines.push(currentLine.join(','));
+        currentLine = [];
+      }
+      currentLine.push(item.str.trim());
+      lastY = y;
+    }
+    if (currentLine.length) lines.push(currentLine.join(','));
+    fullText += lines.join('\n') + '\n';
+  }
+  return fullText;
+}
+
 async function handleFileImport(event) {
   const files = event.target.files;
   if (!files.length) return;
   let imported = 0;
   for (const file of files) {
-    const content = await file.text();
-    await saveSession(file.name, content);
-    imported++;
-    // Cloud sync: upload to API in background if connected
-    if (API.enabled) {
-      API.uploadSession(file).catch(e => {
-        console.warn('Cloud upload failed (saved locally):', e.message);
-      });
+    let content;
+    const isPdf = file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      try {
+        showToast('Reading PDF...');
+        content = await extractPdfText(file);
+      } catch (e) {
+        showToast('PDF read failed: ' + e.message);
+        continue;
+      }
+    } else {
+      content = await file.text();
     }
+    const saveName = isPdf ? file.name.replace(/\.pdf$/i, '.csv') : file.name;
+    await saveSession(saveName, content);
+    imported++;
   }
   event.target.value = '';
-  const cloudMsg = API.enabled ? ' (synced to cloud)' : '';
-  showToast(`Imported ${imported} file${imported > 1 ? 's' : ''}${cloudMsg}`);
+  showToast(`Imported ${imported} file${imported > 1 ? 's' : ''}`);
   await rebuildData();
 }
 

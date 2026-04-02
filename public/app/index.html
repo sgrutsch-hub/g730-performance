@@ -1021,35 +1021,48 @@ async function init() {
       }
     }
 
-    // One-time: rename old 'shane' to 'test' and create fresh 'shane'
+    // One-time migration v2: old 'shane' profile → 'legacy' (uses g730_shane DB)
+    // New profiles use different IDs so they get clean DBs
     const profs = getProfiles();
-    if (profs['shane'] && !profs['test'] && !localStorage.getItem('g730-profile-migrated')) {
-      // Rename shane → test (copy profile data)
-      profs['test'] = { ...profs['shane'], username: 'test', golferName: 'Test' };
-      delete profs['shane'];
-      saveProfiles(profs);
-      // Rename the IndexedDB: g730_shane stays as-is, test will use g730_test
-      // The old data stays in g730_shane DB — test profile points to g730_test (empty)
-      // Actually we need to copy the DB name mapping
-      localStorage.setItem('g730-profile-migrated', 'true');
+    if (!localStorage.getItem('g730-v2-migrated')) {
+      // Wipe all old profiles and start fresh
+      const newProfiles = {};
+      // Preserve old shane data under 'legacy' key — DB is g730_shane
+      if (profs['shane'] || profs['golfer']) {
+        newProfiles['legacy'] = {
+          username: 'legacy', golferName: 'Test (old data)',
+          createdAt: new Date().toISOString(),
+          profile: { launchSim: '', balls: [], bag: [] }
+        };
+      }
+      // If there was already a 'test' profile with copied data, keep it too
+      if (profs['test']) {
+        newProfiles['legacy'] = {
+          username: 'legacy', golferName: 'Test (old data)',
+          createdAt: profs['test'].createdAt || new Date().toISOString(),
+          profile: profs['test'].profile || { launchSim: '', balls: [], bag: [] }
+        };
+      }
+      // New family profiles with unique IDs (different from any old DB names)
+      newProfiles['shane2'] = { username: 'shane2', golferName: 'Shane', createdAt: new Date().toISOString(), profile: { launchSim: 'Bushnell Launch Pro', balls: [], bag: [] } };
+      newProfiles['zach2'] = { username: 'zach2', golferName: 'Zach', createdAt: new Date().toISOString(), profile: { launchSim: '', balls: [], bag: [] } };
+      newProfiles['sam2'] = { username: 'sam2', golferName: 'Sam', createdAt: new Date().toISOString(), profile: { launchSim: '', balls: [], bag: [] } };
+      newProfiles['luke2'] = { username: 'luke2', golferName: 'Luke', createdAt: new Date().toISOString(), profile: { launchSim: '', balls: [], bag: [] } };
+      saveProfiles(newProfiles);
+      setActiveUser('shane2');
+      activeUser = 'shane2';
+      localStorage.setItem('g730-v2-migrated', 'true');
     }
 
-    // Pre-create family profiles if missing
-    if (!Object.keys(getProfiles()).length) {
-      createProfile('shane', 'Shane');
-      createProfile('zach', 'Zach');
-      createProfile('sam', 'Sam');
-      createProfile('luke', 'Luke');
-      setActiveUser('shane');
-      activeUser = 'shane';
-    }
+    // Ensure profiles exist
     const p = getProfiles();
-    if (!p['shane']) createProfile('shane', 'Shane');
-    if (!p['zach']) createProfile('zach', 'Zach');
-    if (!p['sam']) createProfile('sam', 'Sam');
-    if (!p['luke']) createProfile('luke', 'Luke');
-    if (!p['test'] && localStorage.getItem('g730-profile-migrated')) {
-      // Keep test profile if migration happened
+    if (!Object.keys(p).length) {
+      createProfile('shane2', 'Shane');
+      createProfile('zach2', 'Zach');
+      createProfile('sam2', 'Sam');
+      createProfile('luke2', 'Luke');
+      setActiveUser('shane2');
+      activeUser = 'shane2';
     }
 
     // No active user or stale reference — pick the first profile

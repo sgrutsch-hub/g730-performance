@@ -1,4 +1,4 @@
-const CACHE = 'swingdoctor-v32';
+const CACHE = 'swingdoctor-v33';
 const ASSETS = ['./', 'index.html', 'manifest.json', 'apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

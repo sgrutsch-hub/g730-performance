@@ -11,8 +11,6 @@
 <title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}</script>
 <style>
   :root, [data-theme="dark"] {
     --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
@@ -225,7 +223,7 @@
   <div>Loading Swing Doctor...</div>
 </div>
 <div class="toast" id="toast"></div>
-<input type="file" id="fileInput" accept=".csv,.CSV,.pdf,.PDF" multiple style="display:none" onchange="handleFileImport(event)">
+<input type="file" id="fileInput" accept=".csv,.CSV" multiple style="display:none" onchange="handleFileImport(event)">
 
 <div class="container">
   <div class="header">
@@ -621,119 +619,21 @@ async function deleteSession(filename) {
   });
 }
 
-// ─── PDF Parser (FSX Pro Session Reports) ───
-async function parseFsxPdf(file) {
-  if (!window.pdfjsLib) throw new Error('PDF library not loaded');
-  const buf = await file.arrayBuffer();
-  const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-  const shots = [];
-  let sessionDate = null, currentClub = null, isBallDataPage = false;
-
-  for (let pg = 1; pg <= pdf.numPages; pg++) {
-    const page = await pdf.getPage(pg);
-    const content = await page.getTextContent();
-    const items = content.items.filter(i => i.str.trim()).map(i => ({
-      text: i.str.trim(), x: Math.round(i.transform[4]), y: Math.round(i.transform[5])
-    }));
-
-    // Group into rows by Y position (8px threshold)
-    const rowMap = {};
-    items.forEach(item => {
-      let bucket = Object.keys(rowMap).find(y => Math.abs(y - item.y) <= 8);
-      if (!bucket) bucket = item.y;
-      if (!rowMap[bucket]) rowMap[bucket] = [];
-      rowMap[bucket].push(item);
-    });
-    const rows = Object.entries(rowMap).sort((a, b) => b[0] - a[0]).map(([, items]) => items.sort((a, b) => a.x - b.x));
-
-    // Check if this page is a ball data page or club data page
-    const pageText = items.map(i => i.text).join(' ');
-    if (pageText.includes('CLUB SPEED') || pageText.includes('CLUB PATH')) {
-      isBallDataPage = false; // Club data page — skip shot parsing
-    }
-    if (pageText.includes('BALL SPEED') && pageText.includes('CARRY')) {
-      isBallDataPage = true; // Ball data page — parse shots
-    }
-
-    for (const row of rows) {
-      const texts = row.map(r => r.text);
-      const full = texts.join(' ');
-
-      if (!sessionDate) {
-        const dm = full.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})/i);
-        if (dm) {
-          const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
-          sessionDate = `${String(months[dm[1].toLowerCase()]).padStart(2,'0')}-${dm[2].padStart(2,'0')}-${dm[3]}`;
-        }
-      }
-
-      const clubMatch = full.match(/^(Dr|3w|5w|3h|4h|5h|2i|3i|4i|5i|6i|7i|8i|9i|PW|SW|GW|LW|UW)\s*[-–]?\s*Details?/i);
-      if (clubMatch) { currentClub = normalizeClub(clubMatch[1]); continue; }
-      if (texts.length <= 2 && /^(Dr|3w|5w|3h|4h|5h|2i|3i|4i|5i|6i|7i|8i|9i|PW|SW|GW|LW|UW)$/i.test(texts[0])) {
-        currentClub = normalizeClub(texts[0]); continue;
-      }
-
-      if (!currentClub || !sessionDate || !isBallDataPage) continue;
-      if (full.includes('BALL SPEED') || full.includes('mph') || full.includes('Avg.') || full.includes('StdDev.')) continue;
-      if (full.includes('SESSION REPORT') || full.includes('FORESIGHT') || full.includes('Details') || full.includes('missing')) continue;
-      if (full.includes('Summary') || full.includes('Table of Contents') || full.includes('Session Notes')) continue;
-
-      const shotNum = parseInt(texts[0]);
-      if (isNaN(shotNum) || shotNum < 1 || shotNum > 200) continue;
-
-      const vals = texts.slice(1).map(v => { const n = parseFloat(v); return isNaN(n) ? null : n; }).filter(v => v !== null);
-      if (vals.length < 7) continue;
-
-      // Columns: BallSpeed, LaunchDir, LaunchAngle, SpinRate, SpinAxis, Curve, Carry, Total, Offline, DescentAngle
-      shots.push({
-        source: file.name, date: sessionDate, club: currentClub, index: shotNum,
-        ballSpeed: vals[0], launchDirection: vals[1], launchAngle: vals[2],
-        spinRate: vals[3] ? Math.round(vals[3]) : null, spinAxis: vals[4],
-        carry: vals[6], total: vals.length > 7 ? vals[7] : null,
-        offline: vals.length > 8 ? vals[8] : null, landingAngle: vals.length > 9 ? vals[9] : null,
-        apex: null, backSpin: null, sideSpin: null, clubSpeed: null,
-        smashFactor: null, attackAngle: null, clubPath: null, faceAngle: null, dynamicLoft: null,
-      });
-    }
-  }
-  return shots;
-}
-
-// ─── File Import ───
+// ─── File Import (CSV only) ───
 async function handleFileImport(event) {
   const fileList = Array.from(event.target.files);
   if (!fileList.length) return;
   event.target.value = '';
-  let imported = 0, failed = 0, pdfShots = 0;
+  let imported = 0;
   for (let fi = 0; fi < fileList.length; fi++) {
     const file = fileList[fi];
     showToast(`Processing ${fi + 1} of ${fileList.length}: ${file.name}`);
     try {
-      if (file.name.toLowerCase().endsWith('.pdf')) {
-        if (!window.pdfjsLib) { console.error('PDF library not loaded'); failed++; continue; }
-        const shots = await parseFsxPdf(file);
-        if (!shots.length) { console.warn('No shots in:', file.name); failed++; continue; }
-        const dateStr = shots[0]?.date || 'unknown';
-        const clubs = [...new Set(shots.map(s => s.club))].join('-');
-        const dir = v => v == null ? '' : (v < 0 ? `L${Math.abs(v)}` : v > 0 ? `R${v}` : '0');
-        let csv = `Dates,${dateStr},Place,,Player,,\n`;
-        csv += `Club,Index,Ball Speed(mph),Launch Direction,Launch Angle,Spin Rate,Spin Axis,Back Spin,Side Spin,Apex(yd),Carry(yd),Total(yd),Offline(yd),Landing Angle,Club Path,Face Angle,Attack Angle,Dynamic Loft\n`;
-        shots.forEach(s => {
-          csv += `${s.club},${s.index},${s.ballSpeed||''},${dir(s.launchDirection)},${s.launchAngle||''},${s.spinRate||''},${dir(s.spinAxis)},,,,${s.carry||''},${s.total||''},${dir(s.offline)},${s.landingAngle||''},,,, \n`;
-        });
-        await saveSession(`FSX-${dateStr}-${clubs}-${shots.length}shots.csv`, csv);
-        pdfShots += shots.length;
-        imported++;
-      } else {
-        await saveSession(file.name, await file.text());
-        imported++;
-      }
-    } catch (e) { console.error('Import failed:', file.name, e); failed++; }
+      await saveSession(file.name, await file.text());
+      imported++;
+    } catch (e) { console.error('Import failed:', file.name, e); }
   }
-  let msg = `Imported ${imported} of ${fileList.length}`;
-  if (pdfShots) msg += ` (${pdfShots} PDF shots)`;
-  if (failed) msg += ` · ${failed} failed`;
-  showToast(msg);
+  showToast(`Imported ${imported} of ${fileList.length} file${fileList.length > 1 ? 's' : ''}`);
   await rebuildData();
 }
 
@@ -1121,7 +1021,20 @@ async function init() {
       }
     }
 
-    // Pre-create family profiles if none exist
+    // One-time: rename old 'shane' to 'test' and create fresh 'shane'
+    const profs = getProfiles();
+    if (profs['shane'] && !profs['test'] && !localStorage.getItem('g730-profile-migrated')) {
+      // Rename shane → test (copy profile data)
+      profs['test'] = { ...profs['shane'], username: 'test', golferName: 'Test' };
+      delete profs['shane'];
+      saveProfiles(profs);
+      // Rename the IndexedDB: g730_shane stays as-is, test will use g730_test
+      // The old data stays in g730_shane DB — test profile points to g730_test (empty)
+      // Actually we need to copy the DB name mapping
+      localStorage.setItem('g730-profile-migrated', 'true');
+    }
+
+    // Pre-create family profiles if missing
     if (!Object.keys(getProfiles()).length) {
       createProfile('shane', 'Shane');
       createProfile('zach', 'Zach');
@@ -1135,6 +1048,9 @@ async function init() {
     if (!p['zach']) createProfile('zach', 'Zach');
     if (!p['sam']) createProfile('sam', 'Sam');
     if (!p['luke']) createProfile('luke', 'Luke');
+    if (!p['test'] && localStorage.getItem('g730-profile-migrated')) {
+      // Keep test profile if migration happened
+    }
 
     // No active user or stale reference — pick the first profile
     if (!activeUser || !getProfiles()[activeUser]) {

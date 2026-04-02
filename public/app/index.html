@@ -11,14 +11,14 @@
 <title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs" type="module"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
-// Load pdf.js globally
-window.pdfjsReady = import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs').then(mod => {
-  window.pdfjsLib = mod;
-  mod.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
-  return mod;
-}).catch(() => null);
+if (window.pdfjsLib) {
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  window.pdfjsReady = Promise.resolve(window.pdfjsLib);
+} else {
+  window.pdfjsReady = Promise.resolve(null);
+}
 </script>
 <style>
   :root, [data-theme="dark"] {
@@ -912,8 +912,10 @@ async function deleteSession(filename) {
 async function parseFsxPdf(file) {
   await window.pdfjsReady;
   if (!window.pdfjsLib) throw new Error('PDF reader not loaded');
+  console.log('Parsing PDF:', file.name, file.size, 'bytes');
   const buf = await file.arrayBuffer();
   const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  console.log('PDF loaded:', pdf.numPages, 'pages');
   const shots = [];
   let sessionDate = null;
   let currentClub = null;
@@ -957,6 +959,7 @@ async function parseFsxPdf(file) {
       const clubMatch = full.match(/^(Dr|3w|5w|3h|4h|5h|2i|3i|4i|5i|6i|7i|8i|9i|PW|SW|GW|LW|UW)\s*-?\s*Details?/i);
       if (clubMatch) {
         currentClub = normalizeClub(clubMatch[1]);
+        console.log('PDF: Found club section:', currentClub);
         continue;
       }
       // Also detect standalone club name on its own line (e.g., just "Dr" or "7i")
@@ -1018,8 +1021,10 @@ async function handleFileImport(event) {
     if (isPdf) {
       try {
         showToast('Reading PDF...');
+        if (!window.pdfjsLib) { showToast('PDF library not loaded — try refreshing'); continue; }
         const shots = await parseFsxPdf(file);
-        if (!shots.length) { showToast('No shot data found in PDF'); continue; }
+        console.log('PDF parsed:', file.name, shots.length, 'shots');
+        if (!shots.length) { showToast('No shot data found in PDF — check console'); continue; }
         const date = shots[0].date || '01-01-2026';
         // Build DrivingRange-format CSV (simplest format, well-tested parser)
         let csv = `Dates,${date},Place,,Player,,\n`;
@@ -1029,7 +1034,11 @@ async function handleFileImport(event) {
           const dir = v => v == null ? '' : (v < 0 ? `L${Math.abs(v)}` : v > 0 ? `R${v}` : '0');
           csv += `${s.club},${s.index},${s.ballSpeed||''},${dir(s.launchDirection)},${s.launchAngle||''},${s.spinRate||''},${dir(s.spinAxis)},,,,${s.carry||''},${s.total||''},${dir(s.offline)},${s.landingAngle||''},,,, \n`;
         });
-        await saveSession(file.name.replace(/\.pdf$/i, '-pdf.csv'), csv);
+        // Use session date + club list in filename to make each PDF unique
+        const dateStr = shots[0]?.date || 'unknown';
+        const clubs = [...new Set(shots.map(s => s.club))].join('-');
+        const pdfName = `FSX-${dateStr}-${clubs}-${shots.length}shots.csv`;
+        await saveSession(pdfName, csv);
         pdfShots += shots.length;
         imported++;
       } catch (e) {

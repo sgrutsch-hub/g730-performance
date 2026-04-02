@@ -12,14 +12,7 @@
 <link rel="manifest" href="manifest.json">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-if (window.pdfjsLib) {
-  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  window.pdfjsReady = Promise.resolve(window.pdfjsLib);
-} else {
-  window.pdfjsReady = Promise.resolve(null);
-}
-</script>
+<script>if(window.pdfjsLib){window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'}</script>
 <style>
   :root, [data-theme="dark"] {
     --bg: #0d1117; --bg2: #161b22; --bg3: #1c2333;
@@ -251,7 +244,7 @@ if (window.pdfjsLib) {
       <button class="hdr-btn icon-only" onclick="hardRefresh()" title="Refresh data &amp; reload">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
       </button>
-      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV or PDF files">
+      <button class="hdr-btn icon-only import-btn" onclick="document.getElementById('fileInput').click()" title="Import CSV files">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
       </button>
     </div>
@@ -276,7 +269,6 @@ if (window.pdfjsLib) {
       <button class="tab" data-tab="yardage" onclick="switchTab('yardage')">Yardage</button>
       <button class="tab" data-tab="dispersion" onclick="switchTab('dispersion')">Dispersion</button>
       <button class="tab" data-tab="sessions" onclick="switchTab('sessions')">Sessions</button>
-      <button class="tab" data-tab="coach" onclick="switchTab('coach')">AI Coach</button>
       <button class="tab" data-tab="manage" onclick="switchTab('manage')">Data</button>
       <button class="tab" data-tab="profile" onclick="switchTab('profile')">Profile</button>
     </div>
@@ -305,58 +297,6 @@ if (window.pdfjsLib) {
     </div>
     <div id="tab-sessions" class="section-hidden">
       <div class="card"><div class="card-title">Session History</div><div style="overflow-x:auto"><table class="session-table" id="sessionTable"></table></div></div>
-    </div>
-    <div id="tab-coach" class="section-hidden">
-      <div class="card">
-        <div class="card-title">AI Swing Coach</div>
-        <div id="coachIntro" style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">
-          Get personalized coaching advice, drill recommendations, and a practice plan based on your shot data.
-          The AI analyzes your carry distances, consistency, spin rates, and miss patterns to identify exactly what to work on.
-        </div>
-        <div id="coachContext" style="margin-bottom:12px">
-          <textarea id="coachInput" placeholder="Optional: tell the coach what you're working on, what feels off, or what you want to improve..."
-            style="width:100%;padding:10px;font-size:13px;border-radius:8px;border:1px solid var(--border);
-            background:var(--bg3);color:var(--text);font-family:inherit;resize:vertical;min-height:60px"></textarea>
-        </div>
-        <button class="hdr-btn import-btn" onclick="runAICoach()" id="coachBtn" style="width:100%;justify-content:center;padding:10px">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          Analyze My Swing
-        </button>
-        <div id="coachLoading" style="display:none;text-align:center;padding:20px;color:var(--accent)">
-          <div style="margin-bottom:8px">Analyzing your data...</div>
-          <div style="font-size:11px;color:var(--text3)">This takes 10-15 seconds</div>
-        </div>
-      </div>
-      <div id="coachResults" style="display:none">
-        <div class="card">
-          <div class="card-title">Overall Assessment</div>
-          <div id="coachAssessment" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Handicap Context</div>
-          <div id="coachHandicap" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Top Priorities</div>
-          <ol id="coachPriorities" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ol>
-        </div>
-        <div class="card">
-          <div class="card-title">Club Insights</div>
-          <div id="coachClubs"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Recommended Drills</div>
-          <div id="coachDrills"></div>
-        </div>
-        <div class="card">
-          <div class="card-title">Equipment Notes</div>
-          <ul id="coachEquipment" style="font-size:13px;line-height:1.8;color:var(--text);padding-left:20px"></ul>
-        </div>
-        <div class="card">
-          <div class="card-title">Next Session Plan</div>
-          <div id="coachNextSession" style="font-size:13px;line-height:1.6;color:var(--text)"></div>
-        </div>
-      </div>
     </div>
     <div id="tab-manage" class="section-hidden">
       <div class="card">
@@ -402,253 +342,27 @@ if (window.pdfjsLib) {
         <div id="ballList"></div>
         <button class="add-btn" onclick="addBallType()">+ Add Ball</button>
       </div>
-      <div class="card" id="cloudAccountCard">
-        <div class="card-title">Swing Doctor Cloud</div>
-        <div id="cloudNotConnected">
-          <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:12px">
-            Create a free account to unlock cloud sync, AI coaching, and access your data from any device.
-          </div>
-          <div id="cloudAuthForm">
-            <input id="cloudEmail" class="bag-brand" type="email" placeholder="Email" style="width:100%;margin-bottom:6px;padding:8px 10px">
-            <input id="cloudPassword" class="bag-brand" type="password" placeholder="Password (8+ chars)" style="width:100%;margin-bottom:6px;padding:8px 10px">
-            <input id="cloudName" class="bag-brand" placeholder="Display Name" style="width:100%;margin-bottom:8px;padding:8px 10px">
-            <div style="display:flex;gap:6px">
-              <button class="hdr-btn import-btn" onclick="cloudSignUp()" style="flex:1;justify-content:center;padding:8px">Create Account</button>
-              <button class="hdr-btn" onclick="cloudSignIn()" style="flex:1;justify-content:center;padding:8px">Sign In</button>
-            </div>
-            <div id="cloudAuthError" style="font-size:11px;color:var(--red);margin-top:6px;min-height:16px"></div>
-          </div>
-        </div>
-        <div id="cloudConnected" style="display:none">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-            <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
-            <span style="font-size:12px;color:var(--green);font-weight:600">Connected</span>
-            <span id="cloudEmailDisplay" style="font-size:11px;color:var(--text3);margin-left:auto"></span>
-          </div>
-          <div id="cloudTier" style="font-size:12px;color:var(--text2);margin-bottom:8px"></div>
-          <div style="display:flex;gap:6px">
-            <button class="hdr-btn" onclick="cloudUpgradeOrManage()" id="cloudUpgradeBtn" style="flex:1;justify-content:center;padding:8px">Upgrade to Pro</button>
-            <button class="hdr-btn" onclick="cloudLogout()" style="justify-content:center;padding:8px;color:var(--text3)">Log Out</button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 
   <div id="emptyState" class="empty-state" style="display:none">
     <div class="empty-state-icon">&#9971;</div>
-    <div class="empty-state-title">Stop guessing. Start improving.</div>
-    <div class="empty-state-sub">Import your launch monitor CSV files to get<br>clear diagnosis, coaching, and drills.</div>
+    <div class="empty-state-title">Welcome to Swing Doctor</div>
+    <div class="empty-state-sub">Import your Bushnell Launch Pro CSV files<br>or sync from your Mac server.</div>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="import-big" onclick="syncFromServer()">Sync from Server</button>
-      <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSV / PDF</button>
+      <button class="import-big" style="background:var(--bg3);color:var(--accent);border:1px solid var(--accent)" onclick="document.getElementById('fileInput').click()">Import CSVs</button>
     </div>
   </div>
 
-  <div class="footer">Swing Doctor &middot; Your data should coach you.</div>
+  <div class="footer">Swing Doctor &middot; Bushnell Launch Pro</div>
 </div>
 
 <script>
 // ═══════════════════════════════════════════════
-// Swing Doctor — Golf sim performance dashboard
-// Local-first with optional cloud sync via API
+// Swing Doctor — Fully client-side golf sim dashboard
+// All data stored in IndexedDB on the device
 // ═══════════════════════════════════════════════
-
-// ─── API Client ───
-// Provides cloud sync when backend is available.
-// Falls back gracefully to local-only mode.
-const API = {
-  BASE: 'https://api.swing.doctor/api/v1',
-  token: null,
-  refreshToken: null,
-  enabled: false, // set true once user logs in to cloud
-
-  init() {
-    this.token = localStorage.getItem('sd-api-token');
-    this.refreshToken = localStorage.getItem('sd-api-refresh');
-    this.enabled = !!this.token;
-  },
-
-  setTokens(access, refresh) {
-    this.token = access;
-    this.refreshToken = refresh;
-    this.enabled = true;
-    localStorage.setItem('sd-api-token', access);
-    localStorage.setItem('sd-api-refresh', refresh);
-  },
-
-  clearTokens() {
-    this.token = null;
-    this.refreshToken = null;
-    this.enabled = false;
-    localStorage.removeItem('sd-api-token');
-    localStorage.removeItem('sd-api-refresh');
-    localStorage.removeItem('sd-api-profile-id');
-  },
-
-  getProfileId() { return localStorage.getItem('sd-api-profile-id'); },
-  setProfileId(id) { localStorage.setItem('sd-api-profile-id', id); },
-
-  async _fetch(path, opts = {}) {
-    const headers = { ...(opts.headers || {}) };
-    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
-    if (!(opts.body instanceof FormData)) headers['Content-Type'] = 'application/json';
-
-    const res = await fetch(`${this.BASE}${path}`, { ...opts, headers });
-
-    // Token expired — try refresh
-    if (res.status === 401 && this.refreshToken) {
-      const refreshed = await this._tryRefresh();
-      if (refreshed) {
-        headers['Authorization'] = `Bearer ${this.token}`;
-        return fetch(`${this.BASE}${path}`, { ...opts, headers });
-      }
-      this.clearTokens();
-    }
-
-    return res;
-  },
-
-  async _tryRefresh() {
-    try {
-      const res = await fetch(`${this.BASE}/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: this.refreshToken }),
-      });
-      if (!res.ok) return false;
-      const data = await res.json();
-      this.setTokens(data.access_token, data.refresh_token);
-      return true;
-    } catch { return false; }
-  },
-
-  // ── Auth ──
-  async register(email, password, displayName) {
-    const res = await fetch(`${this.BASE}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, display_name: displayName }),
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Registration failed');
-    const data = await res.json();
-    this.setTokens(data.access_token, data.refresh_token);
-    // Fetch profiles to get profile ID
-    await this._loadProfile();
-    return data;
-  },
-
-  async login(email, password) {
-    const res = await fetch(`${this.BASE}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Login failed');
-    const data = await res.json();
-    this.setTokens(data.access_token, data.refresh_token);
-    await this._loadProfile();
-    return data;
-  },
-
-  async _loadProfile() {
-    const res = await this._fetch('/profiles');
-    if (res.ok) {
-      const profiles = await res.json();
-      if (profiles.length) this.setProfileId(profiles[0].id);
-    }
-  },
-
-  // ── Sessions ──
-  async uploadSession(file) {
-    const pid = this.getProfileId();
-    if (!pid) throw new Error('No profile');
-    const form = new FormData();
-    form.append('file', file);
-    const res = await this._fetch(`/sessions/upload?profile_id=${pid}`, {
-      method: 'POST',
-      body: form,
-    });
-    if (!res.ok) throw new Error((await res.json()).detail || 'Upload failed');
-    return res.json();
-  },
-
-  async getSessions(params = {}) {
-    const pid = this.getProfileId();
-    if (!pid) return { sessions: [], has_more: false };
-    const qs = new URLSearchParams({ profile_id: pid, ...params });
-    const res = await this._fetch(`/sessions?${qs}`);
-    if (!res.ok) return { sessions: [], has_more: false };
-    return res.json();
-  },
-
-  // ── Analytics ──
-  async getAnalytics(params = {}) {
-    const pid = this.getProfileId();
-    if (!pid) return null;
-    const qs = new URLSearchParams(params);
-    const res = await this._fetch(`/analytics/profiles/${pid}/summary?${qs}`);
-    if (!res.ok) return null;
-    return res.json();
-  },
-
-  async getHandicap() {
-    const pid = this.getProfileId();
-    if (!pid) return null;
-    const res = await this._fetch(`/analytics/profiles/${pid}/handicap`);
-    if (!res.ok) return null;
-    return res.json();
-  },
-
-  // ── AI Analysis ──
-  async getAIAnalysis(additionalContext = null) {
-    const pid = this.getProfileId();
-    if (!pid) throw new Error('No profile');
-    const body = additionalContext ? { additional_context: additionalContext } : {};
-    const res = await this._fetch(`/ai/profiles/${pid}/analyze`, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.detail || 'AI analysis failed');
-    }
-    return res.json();
-  },
-
-  // ── Billing ──
-  async getSubscriptionStatus() {
-    const res = await this._fetch('/billing/status');
-    if (!res.ok) return { tier: 'free', is_active: false };
-    return res.json();
-  },
-
-  async createCheckout(priceId) {
-    const res = await this._fetch('/billing/checkout', {
-      method: 'POST',
-      body: JSON.stringify({
-        price_id: priceId,
-        success_url: window.location.origin + '?billing=success',
-        cancel_url: window.location.origin + '?billing=cancel',
-      }),
-    });
-    if (!res.ok) throw new Error('Checkout failed');
-    const data = await res.json();
-    window.location.href = data.checkout_url;
-  },
-
-  async openBillingPortal() {
-    const res = await this._fetch('/billing/portal', {
-      method: 'POST',
-      body: JSON.stringify({ return_url: window.location.origin }),
-    });
-    if (!res.ok) throw new Error('Portal failed');
-    const data = await res.json();
-    window.location.href = data.portal_url;
-  },
-};
-
-API.init();
 
 const ELEVATION = 900;
 const DB_VERSION = 1;
@@ -847,7 +561,7 @@ Object.defineProperties(window, {
   TEXT3:  { get() { return cv('--text3'); } },
   BORDER: { get() { return cv('--border'); } },
 });
-const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','coach','manage','profile'];
+const TAB_LIST = ['overview','progress','yardage','dispersion','sessions','manage','profile'];
 
 let DATA = null;
 let selectedClub = null;
@@ -907,117 +621,83 @@ async function deleteSession(filename) {
   });
 }
 
-// ─── File Import ───
-// Parse FSX Pro Session Report PDF into shots
+// ─── PDF Parser (FSX Pro Session Reports) ───
 async function parseFsxPdf(file) {
-  await window.pdfjsReady;
-  if (!window.pdfjsLib) throw new Error('PDF reader not loaded');
-  console.log('Parsing PDF:', file.name, file.size, 'bytes');
+  if (!window.pdfjsLib) throw new Error('PDF library not loaded');
   const buf = await file.arrayBuffer();
   const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
-  console.log('PDF loaded:', pdf.numPages, 'pages');
   const shots = [];
-  let sessionDate = null;
-  let currentClub = null;
+  let sessionDate = null, currentClub = null;
 
   for (let pg = 1; pg <= pdf.numPages; pg++) {
     const page = await pdf.getPage(pg);
     const content = await page.getTextContent();
+    const items = content.items.filter(i => i.str.trim()).map(i => ({
+      text: i.str.trim(), x: Math.round(i.transform[4]), y: Math.round(i.transform[5])
+    }));
 
-    // Collect all non-empty text items with position
-    const items = content.items
-      .filter(item => item.str.trim())
-      .map(item => ({ text: item.str.trim(), x: Math.round(item.transform[4]), y: Math.round(item.transform[5]) }));
-
-    // Group into rows by Y position (use 8px threshold — PDF tables have ~20px row height)
+    // Group into rows by Y position (8px threshold)
     const rowMap = {};
     items.forEach(item => {
-      // Find existing Y bucket within 8px
       let bucket = Object.keys(rowMap).find(y => Math.abs(y - item.y) <= 8);
       if (!bucket) bucket = item.y;
       if (!rowMap[bucket]) rowMap[bucket] = [];
       rowMap[bucket].push(item);
     });
-
-    // Sort rows top-to-bottom (highest Y first in PDF coords)
-    const rows = Object.entries(rowMap)
-      .sort((a, b) => b[0] - a[0])
-      .map(([, items]) => items.sort((a, b) => a.x - b.x));
+    const rows = Object.entries(rowMap).sort((a, b) => b[0] - a[0]).map(([, items]) => items.sort((a, b) => a.x - b.x));
 
     for (const row of rows) {
       const texts = row.map(r => r.text);
       const full = texts.join(' ');
 
-      // Extract session date (e.g., "March 30, 2026")
       if (!sessionDate) {
         const dm = full.match(/(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})/i);
         if (dm) {
           const months = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12};
           sessionDate = `${String(months[dm[1].toLowerCase()]).padStart(2,'0')}-${dm[2].padStart(2,'0')}-${dm[3]}`;
-          console.log('PDF: Session date:', sessionDate);
         }
       }
 
-      // Detect club from "Dr - Details" or standalone club name
       const clubMatch = full.match(/^(Dr|3w|5w|3h|4h|5h|2i|3i|4i|5i|6i|7i|8i|9i|PW|SW|GW|LW|UW)\s*[-–]?\s*Details?/i);
-      if (clubMatch) {
-        currentClub = normalizeClub(clubMatch[1]);
-        console.log('PDF: Found club section:', currentClub);
-        continue;
-      }
+      if (clubMatch) { currentClub = normalizeClub(clubMatch[1]); continue; }
       if (texts.length <= 2 && /^(Dr|3w|5w|3h|4h|5h|2i|3i|4i|5i|6i|7i|8i|9i|PW|SW|GW|LW|UW)$/i.test(texts[0])) {
-        currentClub = normalizeClub(texts[0]);
-        continue;
+        currentClub = normalizeClub(texts[0]); continue;
       }
 
       if (!currentClub || !sessionDate) continue;
-
-      // Skip headers, avg, stddev, labels
       if (full.includes('BALL SPEED') || full.includes('mph') || full.includes('Avg.') || full.includes('StdDev.')) continue;
       if (full.includes('SESSION REPORT') || full.includes('FORESIGHT') || full.includes('Details') || full.includes('missing')) continue;
 
-      // Parse shot row: first value should be shot number (1-200)
       const shotNum = parseInt(texts[0]);
       if (isNaN(shotNum) || shotNum < 1 || shotNum > 200) continue;
 
-      // Remaining values are the shot data — parse as signed floats
-      const vals = texts.slice(1).map(v => {
-        const n = parseFloat(v);
-        return isNaN(n) ? null : n;
-      }).filter(v => v !== null);
+      const vals = texts.slice(1).map(v => { const n = parseFloat(v); return isNaN(n) ? null : n; }).filter(v => v !== null);
+      if (vals.length < 7) continue;
 
-      if (vals.length < 7) continue; // Need: ballSpeed, launchDir, launchAngle, spinRate, spinAxis, curve, carry
-
-      // Column order from FSX PDF: BallSpeed, LaunchDir, LaunchAngle, SpinRate, SpinAxis, Curve, Carry, Total, [Offline, DescentAngle]
+      // Columns: BallSpeed, LaunchDir, LaunchAngle, SpinRate, SpinAxis, Curve, Carry, Total, Offline, DescentAngle
       shots.push({
         source: file.name, date: sessionDate, club: currentClub, index: shotNum,
-        ballSpeed: vals[0],
-        launchDirection: vals[1],
-        launchAngle: vals[2],
-        spinRate: vals[3] ? Math.round(vals[3]) : null,
-        spinAxis: vals[4],
-        carry: vals[6],
-        total: vals.length > 7 ? vals[7] : null,
-        offline: vals.length > 8 ? vals[8] : null,
-        landingAngle: vals.length > 9 ? vals[9] : null,
+        ballSpeed: vals[0], launchDirection: vals[1], launchAngle: vals[2],
+        spinRate: vals[3] ? Math.round(vals[3]) : null, spinAxis: vals[4],
+        carry: vals[6], total: vals.length > 7 ? vals[7] : null,
+        offline: vals.length > 8 ? vals[8] : null, landingAngle: vals.length > 9 ? vals[9] : null,
         apex: null, backSpin: null, sideSpin: null, clubSpeed: null,
         smashFactor: null, attackAngle: null, clubPath: null, faceAngle: null, dynamicLoft: null,
       });
     }
   }
-  console.log('PDF: Total shots parsed:', shots.length, 'clubs:', [...new Set(shots.map(s => s.club))].join(', '));
   return shots;
 }
 
+// ─── File Import ───
 async function handleFileImport(event) {
   const fileList = Array.from(event.target.files);
   if (!fileList.length) return;
-  event.target.value = ''; // Clear immediately so it doesn't interfere
+  event.target.value = '';
   let imported = 0, failed = 0, pdfShots = 0;
-  const total = fileList.length;
   for (let fi = 0; fi < fileList.length; fi++) {
     const file = fileList[fi];
-    showToast(`Processing ${fi + 1} of ${total}: ${file.name}`);
+    showToast(`Processing ${fi + 1} of ${fileList.length}: ${file.name}`);
     try {
       if (file.name.toLowerCase().endsWith('.pdf')) {
         if (!window.pdfjsLib) { console.error('PDF library not loaded'); failed++; continue; }
@@ -1025,28 +705,23 @@ async function handleFileImport(event) {
         if (!shots.length) { console.warn('No shots in:', file.name); failed++; continue; }
         const dateStr = shots[0]?.date || 'unknown';
         const clubs = [...new Set(shots.map(s => s.club))].join('-');
-        const pdfName = `FSX-${dateStr}-${clubs}-${shots.length}shots.csv`;
+        const dir = v => v == null ? '' : (v < 0 ? `L${Math.abs(v)}` : v > 0 ? `R${v}` : '0');
         let csv = `Dates,${dateStr},Place,,Player,,\n`;
         csv += `Club,Index,Ball Speed(mph),Launch Direction,Launch Angle,Spin Rate,Spin Axis,Back Spin,Side Spin,Apex(yd),Carry(yd),Total(yd),Offline(yd),Landing Angle,Club Path,Face Angle,Attack Angle,Dynamic Loft\n`;
-        const dir = v => v == null ? '' : (v < 0 ? `L${Math.abs(v)}` : v > 0 ? `R${v}` : '0');
         shots.forEach(s => {
           csv += `${s.club},${s.index},${s.ballSpeed||''},${dir(s.launchDirection)},${s.launchAngle||''},${s.spinRate||''},${dir(s.spinAxis)},,,,${s.carry||''},${s.total||''},${dir(s.offline)},${s.landingAngle||''},,,, \n`;
         });
-        await saveSession(pdfName, csv);
+        await saveSession(`FSX-${dateStr}-${clubs}-${shots.length}shots.csv`, csv);
         pdfShots += shots.length;
         imported++;
       } else {
-        const content = await file.text();
-        await saveSession(file.name, content);
+        await saveSession(file.name, await file.text());
         imported++;
       }
-    } catch (e) {
-      console.error('Import failed:', file.name, e);
-      failed++;
-    }
+    } catch (e) { console.error('Import failed:', file.name, e); failed++; }
   }
-  let msg = `Imported ${imported} of ${total} file${total > 1 ? 's' : ''}`;
-  if (pdfShots) msg += ` (${pdfShots} shots from PDF)`;
+  let msg = `Imported ${imported} of ${fileList.length}`;
+  if (pdfShots) msg += ` (${pdfShots} PDF shots)`;
   if (failed) msg += ` · ${failed} failed`;
   showToast(msg);
   await rebuildData();
@@ -1385,444 +1060,6 @@ async function bootstrapFromServer() {
   } catch (e) { return false; }
 }
 
-// ─── Cloud Account ───
-async function cloudSignUp() {
-  const email = document.getElementById('cloudEmail').value.trim();
-  const password = document.getElementById('cloudPassword').value;
-  const name = document.getElementById('cloudName').value.trim();
-  const errEl = document.getElementById('cloudAuthError');
-  errEl.textContent = '';
-
-  if (!email || !email.includes('@')) { errEl.textContent = 'Valid email required'; return; }
-  if (password.length < 8) { errEl.textContent = 'Password must be 8+ characters'; return; }
-  if (!name) { errEl.textContent = 'Display name required'; return; }
-
-  try {
-    await API.register(email, password, name);
-    updateCloudUI();
-    showToast('Account created!');
-  } catch (e) {
-    errEl.textContent = e.message;
-  }
-}
-
-async function cloudSignIn() {
-  const email = document.getElementById('cloudEmail').value.trim();
-  const password = document.getElementById('cloudPassword').value;
-  const errEl = document.getElementById('cloudAuthError');
-  errEl.textContent = '';
-
-  if (!email) { errEl.textContent = 'Email required'; return; }
-  if (!password) { errEl.textContent = 'Password required'; return; }
-
-  try {
-    await API.login(email, password);
-    updateCloudUI();
-    showToast('Signed in!');
-  } catch (e) {
-    errEl.textContent = e.message;
-  }
-}
-
-function cloudLogout() {
-  API.clearTokens();
-  updateCloudUI();
-  showToast('Logged out');
-}
-
-async function cloudUpgradeOrManage() {
-  try {
-    const status = await API.getSubscriptionStatus();
-    if (status.is_active) {
-      await API.openBillingPortal();
-    } else {
-      // Default to pro monthly — in production, show plan picker
-      showToast('Stripe checkout not configured yet');
-    }
-  } catch (e) {
-    showToast('Billing: ' + e.message);
-  }
-}
-
-function updateCloudUI() {
-  const connected = document.getElementById('cloudConnected');
-  const notConnected = document.getElementById('cloudNotConnected');
-
-  if (API.enabled) {
-    connected.style.display = '';
-    notConnected.style.display = 'none';
-    // Decode email from JWT if available
-    try {
-      const payload = JSON.parse(atob(API.token.split('.')[1]));
-      document.getElementById('cloudEmailDisplay').textContent = payload.sub || '';
-    } catch { /* ignore */ }
-    // Check subscription status
-    API.getSubscriptionStatus().then(status => {
-      const tierEl = document.getElementById('cloudTier');
-      const btn = document.getElementById('cloudUpgradeBtn');
-      const tierNames = { free: 'Free', pro: 'Pro', pro_plus: 'Pro+', coach: 'Coach', academy: 'Academy' };
-      tierEl.textContent = `Plan: ${tierNames[status.tier] || status.tier}`;
-      if (status.tier !== 'free') {
-        btn.textContent = 'Manage Subscription';
-      } else {
-        btn.textContent = 'Upgrade to Pro';
-      }
-    }).catch(() => {});
-  } else {
-    connected.style.display = 'none';
-    notConnected.style.display = '';
-  }
-}
-
-// ─── AI Coach ───
-async function runAICoach() {
-  if (!API.enabled) {
-    // Run locally using current data — build the analysis prompt client-side
-    // and show a message that cloud account is needed for full AI
-    runLocalCoach();
-    return;
-  }
-
-  const btn = document.getElementById('coachBtn');
-  const loading = document.getElementById('coachLoading');
-  const results = document.getElementById('coachResults');
-  const context = document.getElementById('coachInput').value.trim();
-
-  btn.style.display = 'none';
-  loading.style.display = '';
-  results.style.display = 'none';
-
-  try {
-    const analysis = await API.getAIAnalysis(context || null);
-    renderCoachResults(analysis);
-  } catch (e) {
-    showToast('AI analysis failed: ' + e.message);
-    // Fall back to local coach
-    runLocalCoach();
-  } finally {
-    btn.style.display = '';
-    loading.style.display = 'none';
-  }
-}
-
-// Helper stats functions
-function _avg(arr) { return arr.length ? arr.reduce((a,b) => a+b, 0) / arr.length : null; }
-function _std(arr) { if (arr.length < 2) return null; const m = _avg(arr); return Math.sqrt(arr.reduce((s,v) => s + (v-m)**2, 0) / arr.length); }
-function _pct(arr, fn) { return arr.length ? (arr.filter(fn).length / arr.length * 100) : null; }
-
-function runLocalCoach() {
-  if (!DATA || !DATA.shots.length) { showToast('Import some sessions first'); return; }
-
-  const fs = DATA.shots.filter(s => s.filtered);
-  const clubs = {};
-  fs.forEach(s => { (clubs[s.club] = clubs[s.club] || []).push(s); });
-
-  // ── Handicap estimation from 7 Iron carry ──
-  const benchmarks7i = [[175,0,5],[165,5,10],[155,10,15],[145,15,20],[135,20,25],[120,25,30],[100,30,36]];
-  const benchmarksDr = [[270,0,5],[250,5,10],[230,10,15],[210,15,20],[190,20,25],[170,25,30],[150,30,36]];
-  const hcFactors = [];
-  let hcLow = 15, hcHigh = 36;
-
-  const iron7 = clubs['7 Iron'];
-  if (iron7 && iron7.length >= 10) {
-    const avg = _avg(iron7.map(s=>s.carry).filter(Boolean));
-    if (avg) {
-      for (const [thresh, lo, hi] of benchmarks7i) {
-        if (avg >= thresh) { hcFactors.push(`7 Iron avg carry ${avg.toFixed(0)} yds`); hcLow = lo; hcHigh = hi; break; }
-      }
-    }
-  }
-  const driver = clubs['Driver'];
-  if (driver && driver.length >= 5) {
-    const avg = _avg(driver.map(s=>s.carry).filter(Boolean));
-    if (avg) {
-      for (const [thresh, lo, hi] of benchmarksDr) {
-        if (avg >= thresh) { hcFactors.push(`Driver avg carry ${avg.toFixed(0)} yds`); hcLow = (hcLow + lo) / 2; hcHigh = (hcHigh + hi) / 2; break; }
-      }
-    }
-  }
-  // Smash factor signal
-  const allSmash = fs.map(s => s.smashFactor).filter(Boolean);
-  if (allSmash.length) {
-    const avgSm = _avg(allSmash);
-    if (avgSm >= 1.45) hcFactors.push(`Excellent smash factor (${avgSm.toFixed(2)})`);
-    else if (avgSm >= 1.40) hcFactors.push(`Good smash factor (${avgSm.toFixed(2)})`);
-    else hcFactors.push(`Smash factor needs work (${avgSm.toFixed(2)})`);
-  }
-
-  // ── Per-club analysis ──
-  const clubInsights = [];
-  for (const [club, shots] of Object.entries(clubs)) {
-    const carries = shots.map(s => s.carry).filter(Boolean);
-    const speeds = shots.map(s => s.ballSpeed).filter(Boolean);
-    const spins = shots.map(s => s.spinRate).filter(Boolean);
-    const launches = shots.map(s => s.launchAngle).filter(Boolean);
-    const offlines = shots.map(s => s.offline).filter(c => c != null);
-    const smashes = shots.map(s => s.smashFactor).filter(Boolean);
-    const clubPaths = shots.map(s => s.clubPath).filter(c => c != null);
-    const faceAngles = shots.map(s => s.faceAngle).filter(c => c != null);
-
-    const avgCarry = _avg(carries); const stdCarry = _std(carries);
-    const avgSpeed = _avg(speeds);
-    const avgSpin = _avg(spins);
-    const avgLaunch = _avg(launches);
-    const avgOff = _avg(offlines); const stdOff = _std(offlines);
-    const avgSmash = _avg(smashes);
-    const avgPath = _avg(clubPaths);
-    const avgFace = _avg(faceAngles);
-    const leftPct = _pct(offlines, v => v < 0);
-
-    const strengths = [];
-    const weaknesses = [];
-
-    // Carry consistency
-    if (stdCarry != null && carries.length >= 5) {
-      if (stdCarry < 6) strengths.push(`Very consistent carry (${stdCarry.toFixed(1)} yds std dev)`);
-      else if (stdCarry < 10) strengths.push(`Good carry consistency (${stdCarry.toFixed(1)} yds std dev)`);
-      else weaknesses.push(`Carry inconsistent (${stdCarry.toFixed(1)} yds std dev) — focus on strike quality`);
-    }
-
-    // Dispersion
-    if (stdOff != null && offlines.length >= 5) {
-      if (stdOff < 6) strengths.push(`Tight dispersion (${stdOff.toFixed(1)} yds)`);
-      else if (stdOff < 12) {} // neutral
-      else weaknesses.push(`Wide dispersion (${stdOff.toFixed(1)} yds) — work on face control at impact`);
-    }
-
-    // Miss pattern
-    if (leftPct != null && offlines.length >= 10) {
-      if (leftPct > 75) weaknesses.push(`Pull bias — ${leftPct.toFixed(0)}% of shots go left. Check club path and face angle at impact`);
-      else if (leftPct < 25) weaknesses.push(`Push/slice pattern — ${(100-leftPct).toFixed(0)}% go right. Path is likely out-to-in`);
-      else if (leftPct > 40 && leftPct < 60) strengths.push('Balanced miss pattern (no strong left/right bias)');
-    }
-
-    // Spin analysis
-    if (avgSpin != null && spins.length >= 5) {
-      const isIron = club.includes('Iron') || club === 'PW' || club === 'GW' || club === 'SW' || club === 'LW';
-      const isHybrid = club.includes('Hybrid');
-      if (isIron) {
-        if (avgSpin > 7000) weaknesses.push(`Spin too high (${avgSpin.toFixed(0)} rpm) — ball is ballooning, costing carry distance`);
-        else if (avgSpin < 3500 && !club.includes('5')) weaknesses.push(`Spin low (${avgSpin.toFixed(0)} rpm) — ball won't hold greens`);
-        else strengths.push(`Good spin rate (${avgSpin.toFixed(0)} rpm)`);
-      } else if (isHybrid) {
-        if (avgSpin > 5500) weaknesses.push(`Spin high for a hybrid (${avgSpin.toFixed(0)} rpm) — losing distance`);
-        else strengths.push(`Good hybrid spin (${avgSpin.toFixed(0)} rpm)`);
-      } else if (club === 'Driver') {
-        if (avgSpin > 3200) weaknesses.push(`Driver spin high (${avgSpin.toFixed(0)} rpm) — try lowering tee or teeing it forward`);
-        else if (avgSpin < 1800) weaknesses.push(`Driver spin too low (${avgSpin.toFixed(0)} rpm) — ball dropping out of the air`);
-        else strengths.push(`Good driver spin (${avgSpin.toFixed(0)} rpm)`);
-      }
-    }
-
-    // Launch angle
-    if (avgLaunch != null && launches.length >= 5) {
-      if (club === 'Driver') {
-        if (avgLaunch < 10) weaknesses.push(`Launch too low (${avgLaunch.toFixed(1)}°) — try higher tee or more loft`);
-        else if (avgLaunch > 16) weaknesses.push(`Launch high (${avgLaunch.toFixed(1)}°) — may be hitting up too much or tee too high`);
-        else strengths.push(`Good launch angle (${avgLaunch.toFixed(1)}°)`);
-      } else if (avgLaunch < 14 && (club.includes('Iron') || club.includes('Hybrid'))) {
-        weaknesses.push(`Launch low (${avgLaunch.toFixed(1)}°) — may need to check ball position or shaft flex`);
-      }
-    }
-
-    // Smash factor
-    if (avgSmash != null && smashes.length >= 5) {
-      if (avgSmash >= 1.45) strengths.push(`Excellent strike quality (${avgSmash.toFixed(2)} smash factor)`);
-      else if (avgSmash < 1.35) weaknesses.push(`Strike quality needs work (${avgSmash.toFixed(2)} smash factor) — focus on center contact`);
-    }
-
-    // Club path + face angle combo
-    if (avgPath != null && avgFace != null && clubPaths.length >= 5) {
-      const pathDir = avgPath < -1.5 ? 'out-to-in' : avgPath > 1.5 ? 'in-to-out' : 'neutral';
-      const faceDir = avgFace < -1.5 ? 'closed' : avgFace > 1.5 ? 'open' : 'square';
-      if (pathDir === 'out-to-in' && faceDir === 'closed') weaknesses.push(`Pull pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° closed`);
-      else if (pathDir === 'out-to-in' && faceDir === 'open') weaknesses.push(`Slice pattern: path ${avgPath.toFixed(1)}° out-to-in + face ${avgFace.toFixed(1)}° open`);
-      else if (pathDir === 'in-to-out' && faceDir === 'closed') strengths.push(`Draw pattern: path ${avgPath.toFixed(1)}° in-to-out + face ${avgFace.toFixed(1)}°`);
-      else if (pathDir === 'neutral' && faceDir === 'square') strengths.push('Neutral path and face — solid swing mechanics');
-    }
-
-    // Summary line
-    const parts = [`${shots.length} shots`];
-    if (avgCarry) parts.push(`avg carry ${avgCarry.toFixed(1)} yds`);
-    if (avgSpeed) parts.push(`avg speed ${avgSpeed.toFixed(1)} mph`);
-    if (avgSpin) parts.push(`${avgSpin.toFixed(0)} rpm`);
-    if (avgSmash) parts.push(`smash ${avgSmash.toFixed(2)}`);
-
-    clubInsights.push({
-      club_name: club,
-      summary: parts.join(', '),
-      strengths: strengths.length ? strengths : ['Not enough data to assess'],
-      weaknesses: weaknesses.length ? weaknesses : ['Looking good — keep it up!'],
-      priority_fix: weaknesses.length ? weaknesses[0] : 'Maintain current form',
-    });
-  }
-
-  const order = {'Driver':1,'3 Wood':2,'5 Wood':3,'3 Hybrid':6,'4 Hybrid':7,'5 Hybrid':8,
-    '3 Iron':10,'4 Iron':11,'5 Iron':12,'6 Iron':13,'7 Iron':14,'8 Iron':15,'9 Iron':16,
-    'PW':17,'GW':18,'SW':19,'LW':20};
-  clubInsights.sort((a, b) => (order[a.club_name] || 50) - (order[b.club_name] || 50));
-
-  const totalShots = fs.length;
-  const uniqueClubs = Object.keys(clubs).length;
-
-  // ── Generate targeted drills based on actual weaknesses ──
-  const drills = [];
-  const hasDispersionIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('dispersion')));
-  const hasConsistencyIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('inconsistent') || w.includes('variance')));
-  const hasMissPattern = clubInsights.some(c => c.weaknesses.some(w => w.includes('bias') || w.includes('Pull') || w.includes('Slice') || w.includes('push')));
-  const hasSpinIssue = clubInsights.some(c => c.weaknesses.some(w => w.includes('Spin')));
-
-  if (hasDispersionIssue) {
-    drills.push({
-      name: 'Gate Drill', focus_area: 'accuracy',
-      description: 'Place two alignment sticks 10 yards apart at your average carry distance. Hit 20 shots trying to land between them. Track success rate. Start with your most consistent club and work toward your worst.',
-      duration_minutes: 20, difficulty: 'intermediate',
-      expected_improvement: 'Tighter landing zone, better face control through impact',
-    });
-  }
-  if (hasConsistencyIssue) {
-    drills.push({
-      name: '10-Shot Blocks', focus_area: 'consistency',
-      description: 'Hit 10 shots with the same club at the same target. After each block, note your avg carry and std dev. Rest 30 seconds between blocks. Do 3 blocks per club. Goal: reduce std dev by 2+ yards over 4 weeks.',
-      duration_minutes: 25, difficulty: 'beginner',
-      expected_improvement: 'More predictable distances, better club selection on course',
-    });
-  }
-  if (hasMissPattern) {
-    drills.push({
-      name: 'Path Correction', focus_area: 'swing path',
-      description: 'Place a headcover 4 inches outside the ball (for pull/hook) or inside (for push/slice). Make half swings avoiding the headcover. This forces your path to shallow out. Gradually increase to full swings over 15 shots.',
-      duration_minutes: 15, difficulty: 'intermediate',
-      expected_improvement: 'Straighter ball flight, reduced miss pattern',
-    });
-  }
-  if (hasSpinIssue) {
-    drills.push({
-      name: 'Strike Location Check', focus_area: 'contact quality',
-      description: 'Apply foot spray or impact tape to the club face. Hit 10 shots and check the strike pattern. If strikes are toward the heel, stand slightly further from the ball. If toe-heavy, stand closer. Goal: center-face contact on 7/10 shots.',
-      duration_minutes: 10, difficulty: 'beginner',
-      expected_improvement: 'Better spin rates, more distance from the same swing',
-    });
-  }
-  if (!drills.length) {
-    drills.push({
-      name: 'Stock Shot Routine', focus_area: 'maintenance',
-      description: 'Your numbers look solid. Hit 10 shots per club through your bag, focusing on tempo and target. Track any club where carry drops more than 5 yards from your average — that\'s your early warning system.',
-      duration_minutes: 30, difficulty: 'intermediate',
-      expected_improvement: 'Maintain current form, catch regression early',
-    });
-  }
-
-  // ── Handicap context ──
-  let hcContext;
-  if (hcFactors.length) {
-    hcContext = `Estimated handicap range: ${Math.round(hcLow)}-${Math.round(hcHigh)}. Based on: ${hcFactors.join('; ')}. `;
-    hcContext += hcHigh <= 10 ? 'Your ball striking is strong — short game and course management are likely the biggest gaps.' :
-      hcHigh <= 20 ? 'Consistency is your main opportunity. Reducing carry variance by 3-5 yards per club would drop 2-3 strokes.' :
-      'Focus on solid contact first. Better strike quality (smash factor) gives you free distance with the same swing.';
-  } else {
-    hcContext = 'Need more data (especially 7 Iron and Driver) for a reliable handicap estimate. Keep importing sessions.';
-  }
-
-  // ── Overall assessment ──
-  const bestClub = clubInsights.find(c => c.weaknesses[0]?.includes('Looking good') || c.weaknesses[0]?.includes('Maintain'));
-  const worstClub = clubInsights.filter(c => c.weaknesses.length > 0 && !c.weaknesses[0]?.includes('Looking good')).slice(-1)[0];
-  let assessment = `Analysis of ${totalShots} filtered shots across ${uniqueClubs} clubs. `;
-  if (bestClub) assessment += `Your ${bestClub.club_name} is your most reliable club. `;
-  if (worstClub) assessment += `Your ${worstClub.club_name} needs the most attention. `;
-  if (!API.enabled) assessment += 'Upgrade to Pro for full AI coaching with personalized session plans.';
-
-  // ── Next session plan ──
-  const weakestClub = clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain'));
-  const focusClub = weakestClub.length ? weakestClub[0].club_name : (clubInsights[0]?.club_name || '7 Iron');
-  const secondClub = weakestClub.length > 1 ? weakestClub[1].club_name : '7 Iron';
-  const nextPlan = `Warm up: 10 easy swings with ${secondClub}. Main block: 30 focused shots with ${focusClub} — ${weakestClub[0]?.priority_fix || 'track carry and offline'}. Cool down: 10 shots alternating between your two most consistent clubs. Total: ~50 shots, 45 minutes.`;
-
-  // ── Equipment notes ──
-  const equipNotes = [];
-  const allSpeeds = fs.map(s => s.ballSpeed).filter(Boolean);
-  if (allSpeeds.length) {
-    const maxSpeed = Math.max(...allSpeeds);
-    if (maxSpeed > 165) equipNotes.push('Your ball speed supports stiff or x-stiff shafts');
-    else if (maxSpeed > 140) equipNotes.push('Regular to stiff shaft flex is appropriate for your speed');
-    else equipNotes.push('Consider regular flex shafts for your swing speed');
-  }
-  // Gap analysis
-  const clubCarries = clubInsights.filter(c => c.summary.includes('avg carry')).map(c => ({
-    name: c.club_name,
-    carry: parseFloat(c.summary.match(/avg carry ([\d.]+)/)?.[1] || 0),
-  })).filter(c => c.carry > 0).sort((a,b) => b.carry - a.carry);
-  for (let i = 0; i < clubCarries.length - 1; i++) {
-    const gap = clubCarries[i].carry - clubCarries[i+1].carry;
-    if (gap > 25) equipNotes.push(`${Math.round(gap)} yard gap between ${clubCarries[i].name} and ${clubCarries[i+1].name} — consider adding a club in between`);
-  }
-
-  renderCoachResults({
-    overall_assessment: assessment,
-    handicap_context: hcContext,
-    top_priorities: clubInsights.filter(c => !c.weaknesses[0]?.includes('Looking good') && !c.weaknesses[0]?.includes('Maintain')).slice(0, 3).map(c => `${c.club_name}: ${c.priority_fix}`),
-    club_insights: clubInsights,
-    drills,
-    equipment_notes: equipNotes.length ? equipNotes : ['Your equipment setup looks reasonable based on the data'],
-    next_session_plan: nextPlan,
-  });
-}
-
-function renderCoachResults(data) {
-  const results = document.getElementById('coachResults');
-  results.style.display = '';
-
-  // Assessment
-  document.getElementById('coachAssessment').textContent = data.overall_assessment || '';
-
-  // Handicap
-  document.getElementById('coachHandicap').textContent = data.handicap_context || '';
-
-  // Priorities
-  const prioEl = document.getElementById('coachPriorities');
-  prioEl.innerHTML = (data.top_priorities || []).map(p => `<li>${p}</li>`).join('');
-
-  // Club insights
-  const clubsEl = document.getElementById('coachClubs');
-  clubsEl.innerHTML = (data.club_insights || []).map(ci => `
-    <div style="border-bottom:1px solid var(--border);padding:10px 0">
-      <div style="font-weight:600;font-size:13px;margin-bottom:4px">${ci.club_name}</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:6px">${ci.summary}</div>
-      <div style="display:flex;gap:12px;flex-wrap:wrap">
-        <div style="flex:1;min-width:120px">
-          <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Strengths</div>
-          ${ci.strengths.map(s => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">+ ${s}</div>`).join('')}
-        </div>
-        <div style="flex:1;min-width:120px">
-          <div style="font-size:10px;color:var(--red);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:2px">Work On</div>
-          ${ci.weaknesses.map(w => `<div style="font-size:12px;color:var(--text);margin-bottom:2px">- ${w}</div>`).join('')}
-        </div>
-      </div>
-    </div>
-  `).join('');
-
-  // Drills
-  const drillsEl = document.getElementById('coachDrills');
-  drillsEl.innerHTML = (data.drills || []).map(d => `
-    <div style="border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;background:var(--bg3)">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-weight:600;font-size:13px">${d.name}</span>
-        <span style="font-size:10px;color:var(--text3);background:var(--bg2);padding:2px 8px;border-radius:4px">${d.duration_minutes} min · ${d.difficulty}</span>
-      </div>
-      <div style="font-size:10px;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">${d.focus_area}</div>
-      <div style="font-size:12px;color:var(--text2);line-height:1.5;margin-bottom:6px">${d.description}</div>
-      <div style="font-size:11px;color:var(--green)">Expected: ${d.expected_improvement}</div>
-    </div>
-  `).join('');
-
-  // Equipment
-  const equipEl = document.getElementById('coachEquipment');
-  equipEl.innerHTML = (data.equipment_notes || []).map(n => `<li>${n}</li>`).join('');
-
-  // Next session
-  document.getElementById('coachNextSession').textContent = data.next_session_plan || '';
-}
-
 // ─── Migration: move old g730 DB to first profile ───
 async function migrateOldData() {
   // Check if old 'g730' DB has data
@@ -1883,7 +1120,6 @@ async function init() {
       setActiveUser('shane');
       activeUser = 'shane';
     }
-    // Ensure all family profiles exist
     const p = getProfiles();
     if (!p['shane']) createProfile('shane', 'Shane');
     if (!p['zach']) createProfile('zach', 'Zach');
@@ -1977,7 +1213,7 @@ function onBallTypeFilterChange() { ballTypeFilter = document.getElementById('ba
 
 function buildBallTypeFilter() {
   const select = document.getElementById('ballTypeFilter');
-  if (!select) return; // Ball filter removed from UI
+  if (!select) return;
   const types = [...new Set(DATA.shots.map(s => s.ballType))].sort();
   let html = '<option value="all">All Balls</option>';
   types.forEach(t => { html += `<option value="${t}">${t}</option>`; });
@@ -2007,7 +1243,7 @@ function updateDashboard() {
   const ballLabel = ballTypeFilter !== 'all' ? ` · ${ballTypeFilter}` : '';
   document.getElementById('subtitle').textContent = `${active.length} shots · ${fss.length} sessions · ${label}${ballLabel} · ${DATA.fileCount} files`;
   updateKPIs(fs); updateTrendChart(fss); updateDistChart(fs); updateYardageChart(fs);
-  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab(); updateCloudUI();
+  updateYardageTable(fs); updateScatterChart(fs); updateSessionTable(fss); updateProgressTab(); updateManageTab(); updateProfileTab();
 }
 
 // ─── KPIs ───
@@ -2171,73 +1407,37 @@ function generateYardageCard() {
   const fs = getFilteredShots();
   const bag = buildFullBag(fs);
   if (!bag.length) { showToast('No club data available'); return; }
-
-  const user = getActiveUser();
-  const profiles = getProfiles();
+  const user = getActiveUser(), profiles = getProfiles();
   const name = profiles[user]?.golferName || user;
   const dates = [...new Set(fs.map(s => s.date))].sort();
   const dateRange = dates.length ? `${dates[0]} to ${dates[dates.length-1]}` : '';
-
-  let html = `<div id="yardageCardPrint" style="background:#fff;color:#111;border-radius:12px;padding:20px;font-family:'DM Sans',system-ui,sans-serif">
+  let html = `<div id="yardageCardPrint" style="background:#fff;color:#111;border-radius:12px;padding:20px;font-family:system-ui,sans-serif">
     <div style="text-align:center;margin-bottom:16px">
-      <div style="font-size:18px;font-weight:700;color:#111">${name}'s Yardage Card</div>
+      <div style="font-size:18px;font-weight:700">${name}'s Yardage Card</div>
       <div style="font-size:11px;color:#666;margin-top:4px">${dateRange} &middot; Bottom 20% trimmed</div>
     </div>
     <table style="width:100%;border-collapse:collapse;font-size:13px">
-      <tr style="border-bottom:2px solid #ddd">
-        <th style="text-align:left;padding:8px 6px;font-weight:700;color:#333">Club</th>
-        <th style="text-align:right;padding:8px 6px;font-weight:700;color:#059669">Carry</th>
-        <th style="text-align:right;padding:8px 6px;font-weight:700;color:#0969da">Total</th>
-        <th style="text-align:right;padding:8px 6px;font-weight:700;color:#666">Gap</th>
-      </tr>`;
-
+      <tr style="border-bottom:2px solid #ddd"><th style="text-align:left;padding:8px 6px;font-weight:700">Club</th><th style="text-align:right;padding:8px 6px;font-weight:700;color:#059669">Carry</th><th style="text-align:right;padding:8px 6px;font-weight:700;color:#0969da">Total</th><th style="text-align:right;padding:8px 6px;font-weight:700;color:#666">Gap</th></tr>`;
   for (let i = 0; i < bag.length; i++) {
-    const s = bag[i];
-    const gap = i < bag.length - 1 ? (s.carryAvg - bag[i+1].carryAvg).toFixed(0) : '--';
+    const s = bag[i], gap = i < bag.length - 1 ? (s.carryAvg - bag[i+1].carryAvg).toFixed(0) : '--';
     const est = s.estimated ? ' style="opacity:0.5;font-style:italic"' : '';
     const badge = s.estimated ? ' <span style="font-size:9px;background:#eee;padding:1px 4px;border-radius:3px;color:#999">EST</span>' : '';
-    html += `<tr${est} style="border-bottom:1px solid #eee">
-      <td style="padding:8px 6px;font-weight:600">${s.club}${badge}</td>
-      <td style="text-align:right;padding:8px 6px;font-weight:700;color:#059669">${s.carryAvg.toFixed(0)}</td>
-      <td style="text-align:right;padding:8px 6px;color:#0969da">${s.totalAvg.toFixed(0)}</td>
-      <td style="text-align:right;padding:8px 6px;color:#999">${gap}</td>
-    </tr>`;
+    html += `<tr${est} style="border-bottom:1px solid #eee"><td style="padding:8px 6px;font-weight:600">${s.club}${badge}</td><td style="text-align:right;padding:8px 6px;font-weight:700;color:#059669">${s.carryAvg.toFixed(0)}</td><td style="text-align:right;padding:8px 6px;color:#0969da">${s.totalAvg.toFixed(0)}</td><td style="text-align:right;padding:8px 6px;color:#999">${gap}</td></tr>`;
   }
-
-  html += `</table>
-    <div style="text-align:center;margin-top:12px;font-size:10px;color:#999">Generated by SwingDoctor</div>
-  </div>
-  <div style="display:flex;gap:8px;margin-top:12px">
-    <button class="hdr-btn" onclick="printYardageCard()" style="flex:1;justify-content:center;padding:8px">Print / Save PDF</button>
-    <button class="hdr-btn" onclick="copyYardageCard()" style="flex:1;justify-content:center;padding:8px">Copy to Clipboard</button>
-  </div>`;
-
-  const output = document.getElementById('yardageCardOutput');
-  output.innerHTML = html;
-  output.style.display = '';
+  html += `</table><div style="text-align:center;margin-top:12px;font-size:10px;color:#999">Generated by SwingDoctor</div></div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="hdr-btn" onclick="printYardageCard()" style="flex:1;justify-content:center;padding:8px">Print / Save PDF</button><button class="hdr-btn" onclick="copyYardageCard()" style="flex:1;justify-content:center;padding:8px">Copy to Clipboard</button></div>`;
+  document.getElementById('yardageCardOutput').innerHTML = html;
+  document.getElementById('yardageCardOutput').style.display = '';
 }
-
 function printYardageCard() {
-  const card = document.getElementById('yardageCardPrint');
-  if (!card) return;
-  const win = window.open('', '_blank');
-  win.document.write('<html><head><title>Yardage Card</title><style>body{margin:20px;font-family:system-ui,sans-serif}</style></head><body>');
-  win.document.write(card.outerHTML);
-  win.document.write('</body></html>');
-  win.document.close();
-  win.print();
+  const card = document.getElementById('yardageCardPrint'); if (!card) return;
+  const w = window.open('','_blank'); w.document.write('<html><head><title>Yardage Card</title></head><body style="margin:20px;font-family:system-ui">'+card.outerHTML+'</body></html>'); w.document.close(); w.print();
 }
-
 function copyYardageCard() {
   if (!DATA) return;
-  const fs = getFilteredShots();
-  const bag = buildFullBag(fs);
+  const bag = buildFullBag(getFilteredShots());
   let text = 'Club\tCarry\tTotal\tGap\n';
-  for (let i = 0; i < bag.length; i++) {
-    const s = bag[i];
-    const gap = i < bag.length - 1 ? (s.carryAvg - bag[i+1].carryAvg).toFixed(0) : '';
-    text += `${s.club}\t${s.carryAvg.toFixed(0)}\t${s.totalAvg.toFixed(0)}\t${gap}\n`;
-  }
+  bag.forEach((s,i) => { const gap = i < bag.length-1 ? (s.carryAvg-bag[i+1].carryAvg).toFixed(0) : ''; text += `${s.club}\t${s.carryAvg.toFixed(0)}\t${s.totalAvg.toFixed(0)}\t${gap}\n`; });
   navigator.clipboard.writeText(text).then(() => showToast('Yardage card copied!'));
 }
 

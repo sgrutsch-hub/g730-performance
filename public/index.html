@@ -713,7 +713,7 @@ function parseShotAnalysisCSV(content, filename) {
       headerLine = null;
       continue;
     }
-    if (l.startsWith(',Date,Time,')) { headerLine = l; continue; }
+    if (l.startsWith(',Date,Time,') || l.startsWith('Shot Number,Date,Time,')) { headerLine = l; continue; }
     if (l.startsWith('Average,')) continue;
     if (!headerLine || !currentClub) continue;
     const c = l.split(',');
@@ -758,7 +758,7 @@ function parseSessionCSV(content, filename) {
       headerLine = null;
       continue;
     }
-    if (l.startsWith(',Date,Time,')) { headerLine = l; continue; }
+    if (l.startsWith(',Date,Time,') || l.startsWith('Shot Number,Date,Time,')) { headerLine = l; continue; }
     if (l.startsWith('Average,')) continue;
     if (!headerLine || !currentClub) continue;
     const c = l.split(',');
@@ -783,7 +783,7 @@ function parseSessionCSV(content, filename) {
       spinAxis: num(c[9]), clubSpeed: num(c[10]),
       smashFactor: num(c[12]), attackAngle: num(c[13]), clubPath: num(c[14]),
       faceAngle: null, dynamicLoft: null,
-      carry: num(c[22]), total: null, apex: num(c[24]),
+      carry: num(c[22]), total: num(c[23]), apex: num(c[24]),
       offline: num(c[25]), landingAngle: num(c[28]),
     });
   }

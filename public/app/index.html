@@ -1104,11 +1104,21 @@ function buildFullBag(allShots) {
     const t = shots.filter(s => s.total != null).map(s => s.total);
     const sp = shots.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
     const sn = shots.filter(s => s.spinRate != null).map(s => s.spinRate);
+    const la = shots.filter(s => s.launchAngle != null).map(s => s.launchAngle);
+    const ss = shots.filter(s => s.sideSpin != null).map(s => s.sideSpin);
+    const ld = shots.filter(s => s.landingAngle != null).map(s => s.landingAngle);
+    const aa = shots.filter(s => s.attackAngle != null).map(s => s.attackAngle);
+    const cp = shots.filter(s => s.clubPath != null).map(s => s.clubPath);
+    const of = shots.filter(s => s.offline != null).map(s => s.offline);
+    const ap = shots.filter(s => s.apex != null).map(s => s.apex);
     if (!c.length) continue;
     const rollout = {'Driver':1.14,'3 Wood':1.10,'3 Hybrid':1.08,'4 Iron':1.06,'5 Iron':1.05,
       '6 Iron':1.04,'7 Iron':1.03,'8 Iron':1.02,'9 Iron':1.015,'PW':1.005,'UW':1.0,'SW':1.0,'LW':1.0,'GW':1.0};
     real[club] = { club, carryAvg: avg(c), totalAvg: t.length ? avg(t) : avg(c) * (rollout[club] || 1.03),
-      carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn), shotCount: c.length, estimated: false };
+      carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn),
+      launchAngleAvg: avg(la), sideSpinAvg: avg(ss), landingAngleAvg: avg(ld),
+      attackAngleAvg: avg(aa), clubPathAvg: avg(cp), offlineAvg: of.length ? avg(of.map(Math.abs)) : 0,
+      apexAvg: avg(ap), shotCount: c.length, estimated: false };
   }
 
   const known = Object.values(real).sort((a, b) => (BAG_ORDER[a.club] ?? 99) - (BAG_ORDER[b.club] ?? 99));
@@ -1128,12 +1138,15 @@ function buildFullBag(allShots) {
     if (above && below) {
       const aIdx = BAG_ORDER[above.club], bIdx = BAG_ORDER[below.club];
       const t = (i - aIdx) / (bIdx - aIdx);
+      const lerp = (a, b) => a + t * (b - a);
       result.push({
         club, estimated: true, shotCount: 0,
-        carryAvg: above.carryAvg + t * (below.carryAvg - above.carryAvg),
-        totalAvg: above.totalAvg + t * (below.totalAvg - above.totalAvg),
-        carryStd: 0, ballSpeedAvg: above.ballSpeedAvg + t * (below.ballSpeedAvg - above.ballSpeedAvg),
-        spinRateAvg: above.spinRateAvg + t * (below.spinRateAvg - above.spinRateAvg),
+        carryAvg: lerp(above.carryAvg, below.carryAvg),
+        totalAvg: lerp(above.totalAvg, below.totalAvg),
+        carryStd: 0, ballSpeedAvg: lerp(above.ballSpeedAvg, below.ballSpeedAvg),
+        spinRateAvg: lerp(above.spinRateAvg, below.spinRateAvg),
+        launchAngleAvg: 0, sideSpinAvg: 0, landingAngleAvg: 0,
+        attackAngleAvg: 0, clubPathAvg: 0, offlineAvg: 0, apexAvg: 0,
       });
     }
   }
@@ -1194,16 +1207,30 @@ function updateYardageChart(allShots) {
 function updateYardageTable(allShots) {
   const bag = buildFullBag(allShots);
   for (let i = 0; i < bag.length - 1; i++) bag[i].gap = bag[i].carryAvg - bag[i + 1].carryAvg;
-  document.getElementById('yardageTable').innerHTML = `<tr><th style="text-align:left">Club</th><th>Carry</th><th>Total</th><th>Std</th><th>Speed</th><th>Spin</th><th>Shots</th><th>Gap</th></tr>
+  const e = s => s.estimated;
+  const d = (v, dec) => v != null && !isNaN(v) ? v.toFixed(dec) : '--';
+  const sign = (v, dec) => v != null && !isNaN(v) ? (v >= 0 ? '+' : '') + v.toFixed(dec) : '--';
+  document.getElementById('yardageTable').innerHTML = `<tr>
+      <th style="text-align:left">Club</th><th>Carry</th><th>Total</th><th>Gap</th><th>Std</th>
+      <th>Speed</th><th>Spin</th><th>Launch</th><th>Land</th><th>Apex</th>
+      <th>AoA</th><th>Path</th><th>Offline</th><th>Shots</th></tr>
     ${bag.map(s => {
-      const cls = s.estimated ? ' class="estimated"' : '';
-      const badge = s.estimated ? '<span class="est-badge">EST</span>' : '';
+      const cls = e(s) ? ' class="estimated"' : '';
+      const badge = e(s) ? '<span class="est-badge">EST</span>' : '';
       return `<tr${cls}><td style="text-align:left;font-weight:600">${s.club}${badge}</td>
-        <td class="carry-cell">${s.carryAvg.toFixed(1)}</td><td>${s.totalAvg.toFixed(0)}</td>
-        <td style="color:${TEXT2}">${s.estimated ? '--' : s.carryStd.toFixed(1)}</td>
-        <td>${s.ballSpeedAvg.toFixed(0)}</td><td>${Math.round(s.spinRateAvg)}</td>
-        <td style="color:${TEXT3}">${s.estimated ? '--' : s.shotCount}</td>
-        <td class="gap-cell">${s.gap ? s.gap.toFixed(0) : '--'}</td></tr>`;
+        <td class="carry-cell">${d(s.carryAvg,1)}</td>
+        <td>${d(s.totalAvg,0)}</td>
+        <td class="gap-cell">${s.gap ? s.gap.toFixed(0) : '--'}</td>
+        <td style="color:${TEXT2}">${e(s) ? '--' : d(s.carryStd,1)}</td>
+        <td>${d(s.ballSpeedAvg,0)}</td>
+        <td>${d(s.spinRateAvg,0)}</td>
+        <td>${e(s) ? '--' : d(s.launchAngleAvg,1)+'&deg;'}</td>
+        <td>${e(s) ? '--' : d(s.landingAngleAvg,1)+'&deg;'}</td>
+        <td>${e(s) ? '--' : d(s.apexAvg,0)}</td>
+        <td style="color:${TEXT2}">${e(s) ? '--' : sign(s.attackAngleAvg,1)+'&deg;'}</td>
+        <td style="color:${TEXT2}">${e(s) ? '--' : sign(s.clubPathAvg,1)+'&deg;'}</td>
+        <td style="color:${TEXT2}">${e(s) ? '--' : d(s.offlineAvg,1)}</td>
+        <td style="color:${TEXT3}">${e(s) ? '--' : s.shotCount}</td></tr>`;
     }).join('')}`;
 }
 
@@ -1257,9 +1284,14 @@ function updateScatterChart(allShots) {
 
 function updateSessionTable(sessions) {
   const sess=sessions.filter(s=>s.club===selectedClub).sort((a,b)=>a.date.localeCompare(b.date));
-  document.getElementById('sessionTable').innerHTML=`<tr><th style="text-align:left">Date</th><th>Ball</th><th>Carry</th><th>Std</th><th>Speed</th><th>Spin</th><th>Launch</th><th>Shots</th></tr>
-    ${sess.map(s=>`<tr><td>${s.date.replace(/-\d{4}$/,'')}</td><td style="color:${TEXT3};font-size:11px">${s.ballType||''}</td><td style="font-weight:600;color:${GREEN}">${s.carryAvg.toFixed(1)}</td><td>${s.carryStd.toFixed(1)}</td>
-    <td>${s.ballSpeedAvg.toFixed(1)}</td><td>${Math.round(s.spinRateAvg)}</td><td>${s.launchAngleAvg.toFixed(1)}&deg;</td><td style="color:${TEXT3}">${s.shotCount}</td></tr>`).join('')}`;
+  const sign = (v, dec) => v != null && !isNaN(v) ? (v >= 0 ? '+' : '') + v.toFixed(dec) : '--';
+  document.getElementById('sessionTable').innerHTML=`<tr><th style="text-align:left">Date</th><th>Carry</th><th>Std</th><th>Speed</th><th>Spin</th><th>Launch</th><th>Land</th><th>AoA</th><th>Path</th><th>Shots</th></tr>
+    ${sess.map(s=>`<tr><td>${s.date.replace(/-\d{4}$/,'')}</td>
+    <td style="font-weight:600;color:${GREEN}">${s.carryAvg.toFixed(1)}</td><td>${s.carryStd.toFixed(1)}</td>
+    <td>${s.ballSpeedAvg.toFixed(1)}</td><td>${Math.round(s.spinRateAvg)}</td>
+    <td>${s.launchAngleAvg.toFixed(1)}&deg;</td><td>${s.landingAngleAvg.toFixed(1)}&deg;</td>
+    <td style="color:${TEXT2}">${sign(s.attackAngleAvg,1)}&deg;</td><td style="color:${TEXT2}">${sign(s.clubPathAvg,1)}&deg;</td>
+    <td style="color:${TEXT3}">${s.shotCount}</td></tr>`).join('')}`;
 }
 
 // ─── Progress Tab ───

@@ -10,33 +10,6 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Swing Doctor</title>
 <link rel="manifest" href="manifest.json">
-<script>
-// Force-kill old service workers that break API calls.
-// This runs before anything else loads.
-(async function() {
-  if ('serviceWorker' in navigator) {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    for (const reg of regs) {
-      const sw = reg.active || reg.waiting || reg.installing;
-      if (sw && sw.scriptURL && sw.scriptURL.includes('sw.js')) {
-        // Check if this is the fixed version by looking at cache name
-        // If any old SW is running, nuke it and reload once
-        if (!sessionStorage.getItem('sw_cleared')) {
-          await reg.unregister();
-          if ('caches' in window) {
-            const keys = await caches.keys();
-            await Promise.all(keys.map(k => caches.delete(k)));
-          }
-          sessionStorage.setItem('sw_cleared', '1');
-          window.location.reload();
-          // Stop execution — page will reload
-          throw new Error('reloading');
-        }
-      }
-    }
-  }
-})().catch(() => {});
-</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
   :root, [data-theme="dark"] {

@@ -704,6 +704,41 @@ async function removeProfileBall(idx) {
 }
 
 // ─── Data Loading (API-based) ───
+// Theoretical rollout based on landing angle, spin, and carry.
+// Steeper landing + higher spin = less roll. Lower landing + lower spin = more roll.
+function theoreticalTotal(carry, landingAngle, spinRate) {
+  if (!carry || carry <= 0) return null;
+
+  // Base rollout percentage from landing angle
+  // ~50° landing = ~3% roll (wedges), ~35° = ~15% roll (driver)
+  let rollPct;
+  if (landingAngle == null || landingAngle <= 0) {
+    rollPct = 0.08; // default 8% if no data
+  } else if (landingAngle >= 55) {
+    rollPct = 0.01;
+  } else if (landingAngle >= 48) {
+    rollPct = 0.03 + (55 - landingAngle) * 0.005;
+  } else if (landingAngle >= 40) {
+    rollPct = 0.07 + (48 - landingAngle) * 0.01;
+  } else if (landingAngle >= 30) {
+    rollPct = 0.15 + (40 - landingAngle) * 0.015;
+  } else {
+    rollPct = 0.30 + (30 - landingAngle) * 0.02;
+  }
+
+  // Spin adjustment: high spin reduces roll, low spin increases it
+  // Baseline ~5000 rpm = neutral
+  if (spinRate != null && spinRate > 0) {
+    const spinFactor = (5000 - spinRate) / 50000; // +/- ~10% adjustment
+    rollPct += spinFactor;
+  }
+
+  // Clamp between 0% and 40%
+  rollPct = Math.max(0, Math.min(0.40, rollPct));
+
+  return carry * (1 + rollPct);
+}
+
 function mapShot(shot, session) {
   const date = isoToDisplay(session.session_date);
   return {
@@ -721,7 +756,7 @@ function mapShot(shot, session) {
     sideSpin: shot.side_spin_rpm,
     apex: shot.apex_feet != null ? Number(shot.apex_feet) : null,
     carry: shot.carry_yards != null ? Number(shot.carry_yards) : null,
-    total: shot.total_yards != null ? Number(shot.total_yards) : null,
+    total: null, // computed below
     offline: shot.offline_yards != null ? Number(shot.offline_yards) : null,
     landingAngle: shot.landing_angle_deg != null ? Number(shot.landing_angle_deg) : null,
     clubPath: shot.club_path_deg != null ? Number(shot.club_path_deg) : null,
@@ -735,6 +770,12 @@ function mapShot(shot, session) {
     ballType: session.ball_type || 'tp5x',
     sessionId: session.id,
   };
+  // Compute theoretical total from carry + physics-based rollout
+  const c = shot.carry_yards != null ? Number(shot.carry_yards) : null;
+  const la = shot.landing_angle_deg != null ? Number(shot.landing_angle_deg) : null;
+  const sr = shot.spin_rate_rpm;
+  mapped.total = theoreticalTotal(c, la, sr);
+  return mapped;
 }
 
 function buildDataFromShots(allShots, sessionList) {
@@ -1113,9 +1154,7 @@ function buildFullBag(allShots) {
     const ap = shots.filter(s => s.apex != null).map(s => s.apex);
     const cs = shots.filter(s => s.clubSpeed != null).map(s => s.clubSpeed);
     if (!c.length) continue;
-    const rollout = {'Driver':1.14,'3 Wood':1.10,'3 Hybrid':1.08,'4 Iron':1.06,'5 Iron':1.05,
-      '6 Iron':1.04,'7 Iron':1.03,'8 Iron':1.02,'9 Iron':1.015,'PW':1.005,'UW':1.0,'SW':1.0,'LW':1.0,'GW':1.0};
-    real[club] = { club, carryAvg: avg(c), totalAvg: t.length ? avg(t) : avg(c) * (rollout[club] || 1.03),
+    real[club] = { club, carryAvg: avg(c), totalAvg: t.length ? avg(t) : avg(c),
       carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn),
       launchAngleAvg: avg(la), sideSpinAvg: avg(ss), landingAngleAvg: avg(ld),
       attackAngleAvg: avg(aa), clubPathAvg: avg(cp), offlineAvg: of.length ? avg(of.map(Math.abs)) : 0,

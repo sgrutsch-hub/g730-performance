@@ -1213,7 +1213,7 @@ function updateYardageTable(allShots) {
   const sign = (v, dec) => v != null && !isNaN(v) ? (v >= 0 ? '+' : '') + v.toFixed(dec) : '--';
   const TARGETS = {'Driver':210,'3 Wood':210,'3 Hybrid':198,'5 Iron':178,'6 Iron':158,'7 Iron':148,'8 Iron':138,'9 Iron':128,'PW':118,'GW':108,'UW':98,'SW':88};
   document.getElementById('yardageTable').innerHTML = `<tr>
-      <th style="text-align:left">Club</th><th>Carry</th><th>Target</th><th>+/-</th><th>Gap</th><th>Std</th>
+      <th style="text-align:left">Club</th><th>Carry</th><th>Total</th><th>Target</th><th>+/-</th><th>Gap</th><th>Std</th>
       <th>Ball Spd</th><th>Club Spd</th><th>Spin</th><th>Launch</th><th>Land</th><th>Apex</th>
       <th>AoA</th><th>Path</th><th>Offline</th><th>Shots</th></tr>
     ${bag.map(s => {
@@ -1225,6 +1225,7 @@ function updateYardageTable(allShots) {
       const deltaColor = delta != null ? (delta >= 0 ? GREEN : RED) : TEXT3;
       return `<tr${cls}><td style="text-align:left;font-weight:600">${s.club}${badge}</td>
         <td class="carry-cell">${d(s.carryAvg,1)}</td>
+        <td>${d(s.totalAvg,0)}</td>
         <td style="color:${TEXT3}">${target || '--'}</td>
         <td style="color:${deltaColor};font-weight:600">${deltaStr}</td>
         <td class="gap-cell">${s.gap ? s.gap.toFixed(0) : '--'}</td>

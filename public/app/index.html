@@ -1111,6 +1111,7 @@ function buildFullBag(allShots) {
     const cp = shots.filter(s => s.clubPath != null).map(s => s.clubPath);
     const of = shots.filter(s => s.offline != null).map(s => s.offline);
     const ap = shots.filter(s => s.apex != null).map(s => s.apex);
+    const cs = shots.filter(s => s.clubSpeed != null).map(s => s.clubSpeed);
     if (!c.length) continue;
     const rollout = {'Driver':1.14,'3 Wood':1.10,'3 Hybrid':1.08,'4 Iron':1.06,'5 Iron':1.05,
       '6 Iron':1.04,'7 Iron':1.03,'8 Iron':1.02,'9 Iron':1.015,'PW':1.005,'UW':1.0,'SW':1.0,'LW':1.0,'GW':1.0};
@@ -1118,7 +1119,7 @@ function buildFullBag(allShots) {
       carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn),
       launchAngleAvg: avg(la), sideSpinAvg: avg(ss), landingAngleAvg: avg(ld),
       attackAngleAvg: avg(aa), clubPathAvg: avg(cp), offlineAvg: of.length ? avg(of.map(Math.abs)) : 0,
-      apexAvg: avg(ap), shotCount: c.length, estimated: false };
+      apexAvg: avg(ap), clubSpeedAvg: avg(cs), shotCount: c.length, estimated: false };
   }
 
   const known = Object.values(real).sort((a, b) => (BAG_ORDER[a.club] ?? 99) - (BAG_ORDER[b.club] ?? 99));
@@ -1146,7 +1147,7 @@ function buildFullBag(allShots) {
         carryStd: 0, ballSpeedAvg: lerp(above.ballSpeedAvg, below.ballSpeedAvg),
         spinRateAvg: lerp(above.spinRateAvg, below.spinRateAvg),
         launchAngleAvg: 0, sideSpinAvg: 0, landingAngleAvg: 0,
-        attackAngleAvg: 0, clubPathAvg: 0, offlineAvg: 0, apexAvg: 0,
+        attackAngleAvg: 0, clubPathAvg: 0, offlineAvg: 0, apexAvg: 0, clubSpeedAvg: 0,
       });
     }
   }
@@ -1213,7 +1214,7 @@ function updateYardageTable(allShots) {
   const TARGETS = {'Driver':210,'3 Wood':210,'3 Hybrid':198,'5 Iron':178,'6 Iron':158,'7 Iron':148,'8 Iron':138,'9 Iron':128,'PW':118,'GW':108,'UW':98,'SW':88};
   document.getElementById('yardageTable').innerHTML = `<tr>
       <th style="text-align:left">Club</th><th>Carry</th><th>Target</th><th>+/-</th><th>Gap</th><th>Std</th>
-      <th>Speed</th><th>Spin</th><th>Launch</th><th>Land</th><th>Apex</th>
+      <th>Ball Spd</th><th>Club Spd</th><th>Spin</th><th>Launch</th><th>Land</th><th>Apex</th>
       <th>AoA</th><th>Path</th><th>Offline</th><th>Shots</th></tr>
     ${bag.map(s => {
       const cls = e(s) ? ' class="estimated"' : '';
@@ -1229,6 +1230,7 @@ function updateYardageTable(allShots) {
         <td class="gap-cell">${s.gap ? s.gap.toFixed(0) : '--'}</td>
         <td style="color:${TEXT2}">${e(s) ? '--' : d(s.carryStd,1)}</td>
         <td>${d(s.ballSpeedAvg,0)}</td>
+        <td>${e(s) ? '--' : d(s.clubSpeedAvg,0)}</td>
         <td>${d(s.spinRateAvg,0)}</td>
         <td>${e(s) ? '--' : d(s.launchAngleAvg,1)+'&deg;'}</td>
         <td>${e(s) ? '--' : d(s.landingAngleAvg,1)+'&deg;'}</td>

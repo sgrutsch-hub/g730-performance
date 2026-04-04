@@ -123,6 +123,7 @@ class BushnellShotAnalysisParser(BaseParser):
         shots_by_date: dict[str, list[ParsedShot]] = {}
         current_club: str | None = None
         header_found = False
+        col_layout = "speed_first"
 
         for line in lines:
             stripped = line.strip()
@@ -139,9 +140,16 @@ class BushnellShotAnalysisParser(BaseParser):
                 header_found = False
                 continue
 
-            # Header line
+            # Header line — detect column layout
             if stripped.startswith(",Date,Time,"):
                 header_found = True
+                # New format: ",Date,Time,Carry,Total,Peak Height,..."
+                # Ball Speed at col 10, AoA at col 20, Club Path at col 21
+                if "Carry,Total,Peak Height" in stripped:
+                    col_layout = "carry_first"
+                else:
+                    # Old format: ",Date,Time,Ball Speed,Launch Angle,..."
+                    col_layout = "speed_first"
                 continue
 
             # Average line
@@ -169,38 +177,73 @@ class BushnellShotAnalysisParser(BaseParser):
             if carry is not None and carry <= 0:
                 continue
 
-            shot = ParsedShot(
-                club_name=current_club,
-                ball_speed_mph=_num(cols[10]),
-                launch_angle_deg=_num(cols[11]),
-                launch_direction_deg=_parse_suffix_dir(cols[12]) if len(cols) > 12 else None,
-                side_spin_rpm=_to_int(_parse_suffix_dir(cols[13])) if len(cols) > 13 else None,
-                back_spin_rpm=_to_int(_parse_suffix_dir(cols[14])) if len(cols) > 14 else None,
-                spin_rate_rpm=(
-                    _to_int(_num(cols[15])) or _to_int(_num(cols[14]))
-                    if len(cols) > 15
-                    else None
-                ),
-                spin_axis_deg=(
-                    _parse_suffix_dir(cols[16], left_negative=False)
-                    if len(cols) > 16
-                    else None
-                ),
-                apex_feet=_num(cols[5]),
-                carry_yards=carry,
-                offline_yards=_parse_suffix_dir(cols[6]) if len(cols) > 6 else None,
-                landing_angle_deg=_num(cols[8]) if len(cols) > 8 else None,
-                club_path_deg=_parse_suffix_dir(cols[20]) if len(cols) > 20 else None,
-                face_angle_deg=_parse_suffix_dir(cols[27]) if len(cols) > 27 else None,
-                attack_angle_deg=(
-                    _parse_suffix_dir(cols[19], left_negative=False)
-                    if len(cols) > 19
-                    else None
-                ),
-                smash_factor=_num(cols[18]) if len(cols) > 18 else None,
-                face_to_path_deg=_parse_suffix_dir(cols[21]) if len(cols) > 21 else None,
-                dynamic_loft_deg=_num(cols[23]) if len(cols) > 23 else None,
-            )
+            if col_layout == "carry_first":
+                # New format: ,Date,Time,Carry(3),Total(4),PeakHeight(5),Offline(6),
+                #   Curve(7),DescentAngle(8),HangTime(9),BallSpeed(10),LaunchAngle(11),
+                #   LaunchDir(12),SideSpin(13),BackSpin(14),TotalSpin(15),SpinAxis(16),
+                #   ClubSpeed(17),ClubSpeedImpact(18),Smash(19),AoA(20),ClubPath(21),
+                #   FaceToPath(22),LieAngle(23),DynLoft(24),ClosureRate(25)
+                shot = ParsedShot(
+                    club_name=current_club,
+                    ball_speed_mph=_num(cols[10]),
+                    launch_angle_deg=_num(cols[11]),
+                    launch_direction_deg=_parse_suffix_dir(cols[12]) if len(cols) > 12 else None,
+                    side_spin_rpm=_to_int(_parse_suffix_dir(cols[13])) if len(cols) > 13 else None,
+                    back_spin_rpm=_to_int(_parse_suffix_dir(cols[14])) if len(cols) > 14 else None,
+                    spin_rate_rpm=_to_int(_num(cols[15])) if len(cols) > 15 else None,
+                    spin_axis_deg=(
+                        _parse_suffix_dir(cols[16], left_negative=False)
+                        if len(cols) > 16 else None
+                    ),
+                    club_speed_mph=_num(cols[17]) if len(cols) > 17 else None,
+                    smash_factor=_num(cols[19]) if len(cols) > 19 else None,
+                    attack_angle_deg=(
+                        _parse_suffix_dir(cols[20])
+                        if len(cols) > 20 else None
+                    ),
+                    club_path_deg=_parse_suffix_dir(cols[21]) if len(cols) > 21 else None,
+                    face_to_path_deg=_parse_suffix_dir(cols[22]) if len(cols) > 22 else None,
+                    dynamic_loft_deg=_num(cols[24]) if len(cols) > 24 else None,
+                    closure_rate_dps=_num(cols[25]) if len(cols) > 25 else None,
+                    apex_feet=_num(cols[5]),
+                    carry_yards=carry,
+                    total_yards=_num(cols[4]) if len(cols) > 4 else None,
+                    offline_yards=_parse_suffix_dir(cols[6]) if len(cols) > 6 else None,
+                    landing_angle_deg=_num(cols[8]) if len(cols) > 8 else None,
+                    hang_time_sec=_num(cols[9]) if len(cols) > 9 else None,
+                    curve_yards=_parse_suffix_dir(cols[7]) if len(cols) > 7 else None,
+                )
+            else:
+                # Old format column mapping (preserved from original)
+                shot = ParsedShot(
+                    club_name=current_club,
+                    ball_speed_mph=_num(cols[10]),
+                    launch_angle_deg=_num(cols[11]),
+                    launch_direction_deg=_parse_suffix_dir(cols[12]) if len(cols) > 12 else None,
+                    side_spin_rpm=_to_int(_parse_suffix_dir(cols[13])) if len(cols) > 13 else None,
+                    back_spin_rpm=_to_int(_parse_suffix_dir(cols[14])) if len(cols) > 14 else None,
+                    spin_rate_rpm=(
+                        _to_int(_num(cols[15])) or _to_int(_num(cols[14]))
+                        if len(cols) > 15 else None
+                    ),
+                    spin_axis_deg=(
+                        _parse_suffix_dir(cols[16], left_negative=False)
+                        if len(cols) > 16 else None
+                    ),
+                    apex_feet=_num(cols[5]),
+                    carry_yards=carry,
+                    offline_yards=_parse_suffix_dir(cols[6]) if len(cols) > 6 else None,
+                    landing_angle_deg=_num(cols[8]) if len(cols) > 8 else None,
+                    club_path_deg=_parse_suffix_dir(cols[20]) if len(cols) > 20 else None,
+                    face_angle_deg=_parse_suffix_dir(cols[27]) if len(cols) > 27 else None,
+                    attack_angle_deg=(
+                        _parse_suffix_dir(cols[19])
+                        if len(cols) > 19 else None
+                    ),
+                    smash_factor=_num(cols[18]) if len(cols) > 18 else None,
+                    face_to_path_deg=_parse_suffix_dir(cols[21]) if len(cols) > 21 else None,
+                    dynamic_loft_deg=_num(cols[23]) if len(cols) > 23 else None,
+                )
 
             shots_by_date.setdefault(raw_date, []).append(shot)
 

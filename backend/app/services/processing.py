@@ -21,13 +21,14 @@ from app.models.shot import Shot
 async def process_session_shots(
     db: AsyncSession,
     session: Session,
+    club_targets: dict[str, Decimal] | None = None,
     trim_pct: float = 0.20,
     elevation_ft: int = 0,
 ) -> None:
     """
     Process all shots in a session:
       1. Compute theoretical carry for each shot
-      2. Apply bottom-N% trim by carry distance
+      2. Apply target-based trim (or bottom-N% fallback)
 
     This modifies shots in-place within the current transaction.
     Caller is responsible for committing.
@@ -35,7 +36,10 @@ async def process_session_shots(
     Args:
         db: Active database session
         session: The session whose shots need processing
-        trim_pct: Bottom percentage to trim (default 20%)
+        club_targets: Mapping of club name → target carry yards.
+                      Clubs with a target use +/-15% window trim.
+                      Clubs without a target fall back to bottom-N% trim.
+        trim_pct: Bottom percentage to trim for clubs without targets (default 20%)
         elevation_ft: Elevation for air density adjustment in physics sim
     """
     result = await db.execute(
@@ -47,6 +51,9 @@ async def process_session_shots(
     if not shots:
         return
 
+    if club_targets is None:
+        club_targets = {}
+
     # Step 1: Compute theoretical carry for each shot
     for shot in shots:
         shot.theoretical_carry = _theoretical_carry(
@@ -56,17 +63,38 @@ async def process_session_shots(
             elevation_ft=elevation_ft,
         )
 
-    # Step 2: Apply bottom-N% trim, grouped by club
+    # Step 2: Apply trim, grouped by club
     clubs: dict[str, list[Shot]] = defaultdict(list)
     for shot in shots:
         clubs[shot.club_name].append(shot)
 
-    for club_shots in clubs.values():
-        _apply_trim(club_shots, trim_pct)
+    for club_name, club_shots in clubs.items():
+        target = club_targets.get(club_name)
+        if target:
+            _apply_target_trim(club_shots, target)
+        else:
+            _apply_trim(club_shots, trim_pct)
 
     # Update processed timestamp
     from sqlalchemy import func
     session.processed_at = func.now()
+
+
+def _apply_target_trim(shots: list[Shot], target: Decimal, window: float = 0.15) -> None:
+    """
+    Target-based trim: keep shots within +/- window% of the target carry.
+
+    Example: target=138, window=0.15 → keep shots with carry in [117.3, 158.7].
+    Shots with no carry data are filtered out.
+    """
+    lo = target * Decimal(str(1 - window))
+    hi = target * Decimal(str(1 + window))
+
+    for shot in shots:
+        if shot.carry_yards is None or shot.carry_yards <= 0:
+            shot.is_filtered = False
+        else:
+            shot.is_filtered = lo <= shot.carry_yards <= hi
 
 
 def _apply_trim(shots: list[Shot], trim_pct: float) -> None:

@@ -8,8 +8,10 @@ Clubs are nested under profiles since they belong to a specific golfer's bag.
 """
 
 import uuid
+from decimal import Decimal
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,6 +20,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.club import Club
 from app.models.profile import Profile
+from app.models.session import Session
 from app.models.user import User
 from app.schemas.profile import (
     ClubCreate,
@@ -27,6 +30,7 @@ from app.schemas.profile import (
     ProfileResponse,
     ProfileUpdate,
 )
+from app.services.processing import process_session_shots
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
 
@@ -232,6 +236,93 @@ async def remove_club(
         raise NotFoundError("Club", str(club_id))
     await db.delete(club)
     await db.commit()
+
+
+# ── Club Targets ──
+
+
+class ClubTargetsBody(BaseModel):
+    """Bulk-set target carry for multiple clubs."""
+    targets: dict[str, Decimal | None] = Field(
+        ..., description="Mapping of club name → target carry yards (null to clear)"
+    )
+
+
+@router.put("/{profile_id}/club-targets", response_model=list[ClubResponse])
+async def set_club_targets(
+    profile_id: uuid.UUID,
+    body: ClubTargetsBody,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[Club]:
+    """
+    Bulk-set target carry distances for clubs in the bag.
+
+    Creates clubs that don't exist yet. Updates target_carry for existing clubs.
+    Set a target to null to clear it (reverts to bottom-20% trim for that club).
+    """
+    profile = await _get_owned_profile(db, profile_id, user.id)
+
+    result = await db.execute(
+        select(Club).where(Club.profile_id == profile.id)
+    )
+    existing = {c.name: c for c in result.scalars()}
+
+    for club_name, target in body.targets.items():
+        if club_name in existing:
+            existing[club_name].target_carry = target
+        else:
+            club = Club(
+                profile_id=profile.id,
+                name=club_name,
+                target_carry=target,
+                sort_order=0,
+            )
+            db.add(club)
+
+    await db.commit()
+
+    # Return updated club list
+    result = await db.execute(
+        select(Club).where(Club.profile_id == profile.id).order_by(Club.sort_order)
+    )
+    return list(result.scalars().all())
+
+
+@router.post("/{profile_id}/reprocess", status_code=200)
+async def reprocess_sessions(
+    profile_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """
+    Reprocess all sessions for a profile with current club targets.
+
+    Use after updating target carry values to re-trim existing sessions.
+    """
+    profile = await _get_owned_profile(db, profile_id, user.id)
+
+    # Load club targets
+    club_result = await db.execute(
+        select(Club).where(Club.profile_id == profile.id, Club.target_carry.isnot(None))
+    )
+    club_targets = {c.name: c.target_carry for c in club_result.scalars()}
+
+    # Reprocess all sessions
+    session_result = await db.execute(
+        select(Session).where(Session.profile_id == profile.id)
+    )
+    sessions = list(session_result.scalars().all())
+
+    for session in sessions:
+        await process_session_shots(
+            db, session,
+            club_targets=club_targets,
+            elevation_ft=profile.elevation_ft,
+        )
+
+    await db.commit()
+    return {"reprocessed": len(sessions)}
 
 
 # ── Helpers ──

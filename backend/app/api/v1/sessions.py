@@ -20,6 +20,7 @@ from sqlalchemy.orm import selectinload
 from app.core.exceptions import NotFoundError, ValidationError
 from app.database import get_db
 from app.dependencies import get_current_user
+from app.models.club import Club
 from app.models.profile import Profile
 from app.models.session import Session
 from app.models.shot import Shot
@@ -173,10 +174,16 @@ async def upload_csv(
     if not created_sessions:
         raise ValidationError("All sessions in this file have already been imported")
 
-    # Apply bottom-20% trim and compute theoretical carry
+    # Load club targets for target-based trim
+    club_result = await db.execute(
+        select(Club).where(Club.profile_id == profile_id, Club.target_carry.isnot(None))
+    )
+    club_targets = {c.name: c.target_carry for c in club_result.scalars()}
+
+    # Apply target-based trim (or bottom-20% fallback) and compute theoretical carry
     await db.flush()
     for session in created_sessions:
-        await process_session_shots(db, session)
+        await process_session_shots(db, session, club_targets=club_targets)
 
     await db.commit()
 

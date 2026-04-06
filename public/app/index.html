@@ -1083,6 +1083,8 @@ function updateDistChart(allShots) {
 
 // ─── Full bag with estimated clubs ───
 function buildFullBag(allShots) {
+  // Count ALL shots per club (before filtering) for kept% calculation
+  const allByClub = {}; allShots.forEach(s => { if (s.carry != null && s.carry > 0) (allByClub[s.club] = allByClub[s.club] || []).push(s); });
   const cm = {}; allShots.filter(s => s.filtered).forEach(s => { (cm[s.club] = cm[s.club] || []).push(s); });
   const real = {};
   for (const [club, shots] of Object.entries(cm)) {
@@ -1099,11 +1101,12 @@ function buildFullBag(allShots) {
     const ap = shots.filter(s => s.apex != null).map(s => s.apex);
     const cs = shots.filter(s => s.clubSpeed != null).map(s => s.clubSpeed);
     if (!c.length) continue;
+    const totalShots = (allByClub[club] || []).length;
     real[club] = { club, carryAvg: avg(c), totalAvg: t.length ? avg(t) : avg(c),
       carryStd: std(c), ballSpeedAvg: avg(sp), spinRateAvg: avg(sn),
       launchAngleAvg: avg(la), sideSpinAvg: avg(ss), landingAngleAvg: avg(ld),
       attackAngleAvg: avg(aa), clubPathAvg: avg(cp), offlineAvg: of.length ? avg(of.map(Math.abs)) : 0,
-      apexAvg: avg(ap), clubSpeedAvg: avg(cs), shotCount: c.length, estimated: false };
+      apexAvg: avg(ap), clubSpeedAvg: avg(cs), shotCount: c.length, totalShots, estimated: false };
   }
 
   const known = Object.values(real).sort((a, b) => (BAG_ORDER[a.club] ?? 99) - (BAG_ORDER[b.club] ?? 99));
@@ -1195,11 +1198,15 @@ function updateYardageTable(allShots) {
   const e = s => s.estimated;
   const d = (v, dec) => v != null && !isNaN(v) ? v.toFixed(dec) : '--';
   const sign = (v, dec) => v != null && !isNaN(v) ? (v >= 0 ? '+' : '') + v.toFixed(dec) : '--';
-  const TARGETS = {'Driver':230,'3 Wood':215,'2 Hybrid':205,'3 Hybrid':198,'4 Hybrid':188,'5 Iron':178,'6 Iron':158,'7 Iron':148,'8 Iron':138,'9 Iron':128,'PW':118,'GW':108,'UW':98,'SW':88};
+  const FALLBACK_TARGETS = {'Driver':230,'3 Wood':215,'2 Hybrid':205,'3 Hybrid':198,'4 Hybrid':188,'5 Iron':178,'6 Iron':158,'7 Iron':148,'8 Iron':138,'9 Iron':128,'PW':118,'GW':108,'UW':98,'SW':88};
+  // Use profile club targets if set, otherwise fall back to defaults
+  const profileClubs = (getActiveProfile() || {}).clubs || [];
+  const TARGETS = {...FALLBACK_TARGETS};
+  profileClubs.forEach(c => { if (c.target_carry != null) TARGETS[c.name] = Number(c.target_carry); });
   document.getElementById('yardageTable').innerHTML = `<tr>
       <th style="text-align:left">Club</th><th>Carry</th><th>Total</th><th>Target</th><th>+/-</th><th>Gap</th><th>Std</th>
       <th>Ball Spd</th><th>Club Spd</th><th>Spin</th><th>Launch</th><th>Land</th><th>Apex</th>
-      <th>AoA</th><th>Path</th><th>Offline</th><th>Shots</th></tr>
+      <th>AoA</th><th>Path</th><th>Offline</th><th>Kept</th></tr>
     ${bag.map(s => {
       const cls = e(s) ? ' class="estimated"' : '';
       const badge = e(s) ? '<span class="est-badge">EST</span>' : '';
@@ -1207,6 +1214,8 @@ function updateYardageTable(allShots) {
       const delta = target && !e(s) ? s.carryAvg - target : null;
       const deltaStr = delta != null ? (delta >= 0 ? '+' : '') + delta.toFixed(0) : '--';
       const deltaColor = delta != null ? (delta >= 0 ? GREEN : RED) : TEXT3;
+      const keptPct = (!e(s) && s.totalShots) ? Math.round(100 * s.shotCount / s.totalShots) : null;
+      const keptStr = keptPct != null ? keptPct + '% (' + s.shotCount + '/' + s.totalShots + ')' : (e(s) ? '--' : s.shotCount);
       return `<tr${cls}><td style="text-align:left;font-weight:600">${s.club}${badge}</td>
         <td class="carry-cell">${d(s.carryAvg,1)}</td>
         <td>${d(s.totalAvg,0)}</td>
@@ -1223,7 +1232,7 @@ function updateYardageTable(allShots) {
         <td style="color:${TEXT2}">${e(s) ? '--' : sign(s.attackAngleAvg,1)+'&deg;'}</td>
         <td style="color:${TEXT2}">${e(s) ? '--' : sign(s.clubPathAvg,1)+'&deg;'}</td>
         <td style="color:${TEXT2}">${e(s) ? '--' : d(s.offlineAvg,1)}</td>
-        <td style="color:${TEXT3}">${e(s) ? '--' : s.shotCount}</td></tr>`;
+        <td style="color:${TEXT3};font-size:12px;white-space:nowrap">${keptStr}</td></tr>`;
     }).join('')}`;
 }
 

@@ -65,6 +65,7 @@ class ClubUpdate(BaseModel):
     shaft: str | None = None
     sort_order: int | None = Field(default=None, ge=0, le=99)
     is_active: bool | None = None
+    target_carry: Decimal | None = Field(default=None, ge=30, le=400)
 
 
 class ClubResponse(BaseModel):
@@ -77,6 +78,7 @@ class ClubResponse(BaseModel):
     shaft: str | None
     sort_order: int
     is_active: bool
+    target_carry: Decimal | None
 
     model_config = {"from_attributes": True}
 

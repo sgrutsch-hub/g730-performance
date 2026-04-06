@@ -63,7 +63,15 @@ async def process_session_shots(
             elevation_ft=elevation_ft,
         )
 
-    # Step 2: Apply trim, grouped by club
+    # Step 2: Null out bogus club speed (smash factor > 1.55 is physically impossible)
+    for shot in shots:
+        if (shot.club_speed_mph and shot.club_speed_mph > 0
+                and shot.ball_speed_mph and shot.ball_speed_mph > 0):
+            smash = shot.ball_speed_mph / shot.club_speed_mph
+            if smash > Decimal("1.55"):
+                shot.club_speed_mph = None
+
+    # Step 3: Apply trim, grouped by club
     clubs: dict[str, list[Shot]] = defaultdict(list)
     for shot in shots:
         clubs[shot.club_name].append(shot)

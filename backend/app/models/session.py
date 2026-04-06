@@ -36,6 +36,10 @@ class Session(Base):
         nullable=False,
         comment="Parser that produced this data: bushnell_dr, bushnell_sa, garmin_r10, etc.",
     )
+    content_hash: Mapped[str | None] = mapped_column(
+        String(64),
+        comment="SHA-256 hash of raw CSV content for duplicate detection across filenames.",
+    )
     raw_csv: Mapped[str | None] = mapped_column(
         Text,
         comment="Original CSV content for re-parsing. Nullable for API-ingested sessions.",

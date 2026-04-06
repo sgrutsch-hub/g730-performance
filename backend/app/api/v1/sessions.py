@@ -8,6 +8,7 @@ It auto-detects the CSV format, parses shots, applies the
 bottom-N% trim, and stores everything in a single transaction.
 """
 
+import hashlib
 import uuid
 from datetime import date
 
@@ -76,6 +77,17 @@ async def upload_csv(
 
     filename = file.filename or "unknown.csv"
 
+    # Content-hash duplicate check: reject the entire file if already imported
+    content_hash = hashlib.sha256(text.encode()).hexdigest()
+    existing_hash = await db.execute(
+        select(Session).where(
+            Session.profile_id == profile_id,
+            Session.content_hash == content_hash,
+        )
+    )
+    if existing_hash.scalar_one_or_none():
+        raise ValidationError("This file has already been imported (duplicate content detected)")
+
     # Auto-detect format and parse
     parsed_sessions = detect_and_parse(text, filename)
 
@@ -112,6 +124,7 @@ async def upload_csv(
             profile_id=profile_id,
             source_file=parsed.source_file,
             source_format=parsed.source_format,
+            content_hash=content_hash,
             raw_csv=text if len(text) < 500_000 else None,  # Don't store huge files
             session_date=parsed.session_date,
             ball_type=ball_type or parsed.ball_type,

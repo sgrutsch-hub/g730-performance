@@ -147,7 +147,7 @@ class BushnellDrivingRangeParser(BaseParser):
                 side_spin_rpm=(
                     self._to_int(_parse_prefix_dir(cols[8])) if len(cols) > 8 else None
                 ),
-                apex_feet=_num(cols[9]) if len(cols) > 9 else None,
+                apex_feet=_num(cols[9]) * 3 if len(cols) > 9 and _num(cols[9]) else None,
                 carry_yards=carry,
                 offline_yards=_parse_prefix_dir(cols[12]) if len(cols) > 12 else None,
                 landing_angle_deg=_num(cols[13]) if len(cols) > 13 else None,

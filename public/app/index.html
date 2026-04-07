@@ -773,6 +773,7 @@ function buildDataFromShots(allShots, sessionList) {
       launchAngleAvg: avg(launches), attackAngleAvg: avg(attacks), faceAngleAvg: avg(faces),
       clubPathAvg: avg(paths), landingAngleAvg: avg(landings), spinRateAvg: avg(spins),
       clubSpeedAvg: clubSpeeds.length ? avg(clubSpeeds) : null, apexAvg: apexes.length ? avg(apexes) : null,
+      totalAvg: f.filter(s => s.total != null).length ? avg(f.filter(s => s.total != null).map(s => s.total)) : null,
       offlineAvg: avg(offlines), offlineAbsAvg: offlines.length ? avg(offlines.map(Math.abs)) : 0,
       leftPct: offlines.length ? offlines.filter(o => o < 0).length / offlines.length : 0,
       rightPct: offlines.length ? offlines.filter(o => o > 0).length / offlines.length : 0,
@@ -1316,6 +1317,7 @@ let progressMetric = 'carry';
 
 const PROGRESS_METRICS = {
   carry:      { key: 'carryAvg',       label: 'Carry',       color: GREEN,  unit: 'yds', hib: true, dec: 1 },
+  total:      { key: 'totalAvg',       label: 'Total',       color: TEAL,   unit: 'yds', hib: true, dec: 1 },
   dispersion: { key: 'offlineAbsAvg',  label: 'Dispersion',  color: ORANGE, unit: 'yds', hib: false, dec: 1, reverse: true, yLabel: 'yards (lower = tighter)' },
   consistency:{ key: 'carryStd',       label: 'Consistency',  color: RED,    unit: 'yds', hib: false, dec: 1, reverse: true, yLabel: 'yards (lower = more consistent)' },
   speed:      { key: 'ballSpeedAvg',   label: 'Ball Speed',  color: BLUE,   unit: 'mph', hib: true, dec: 1 },
@@ -1343,7 +1345,7 @@ function updateProgressTab() {
     const off = shots.filter(s => s.offline != null).map(s => s.offline);
     return {
       date: sess.date, label: sess.date.replace(/-\d{4}$/, ''),
-      carryAvg: sess.carryAvg, carryStd: sess.carryStd, ballSpeedAvg: sess.ballSpeedAvg,
+      carryAvg: sess.carryAvg, carryStd: sess.carryStd, totalAvg: sess.totalAvg, ballSpeedAvg: sess.ballSpeedAvg,
       spinRateAvg: sess.spinRateAvg, launchAngleAvg: sess.launchAngleAvg,
       clubPathAvg: sess.clubPathAvg, faceAngleAvg: sess.faceAngleAvg,
       offlineAbsAvg: off.length ? avg(off.map(Math.abs)) : null,
@@ -1364,7 +1366,7 @@ function updateProgressTab() {
     return { current: la, delta: d, pct, dir: Math.abs(pct) < 2 ? 'flat' : (m.hib ? d > 0 : d < 0) ? 'up' : 'down' };
   }
 
-  const metricsToShow = ['carry', 'dispersion', 'consistency', 'speed', 'spin', 'launch', 'clubPath', 'faceAngle'];
+  const metricsToShow = ['carry', 'total', 'dispersion', 'consistency', 'speed', 'spin', 'launch', 'clubPath', 'faceAngle'];
   let html = '';
   for (const mKey of metricsToShow) {
     const m = PROGRESS_METRICS[mKey];
@@ -1387,26 +1389,40 @@ function updateProgressTab() {
 
   const m = PROGRESS_METRICS[progressMetric];
   const labels = sm.map(s => s.label);
-  const data = sm.map(s => s[m.key] != null ? +(+s[m.key]).toFixed(m.dec) : null);
+  const isCombo = ['carry', 'total', 'speed'].includes(progressMetric);
 
-  document.getElementById('progressChartTitle').textContent = m.label + ' Over Time';
+  document.getElementById('progressChartTitle').textContent = isCombo ? 'Carry / Total / Ball Speed Over Time' : m.label + ' Over Time';
   if (charts.progress) charts.progress.destroy();
   const opts = { ...chartOpts() };
-  if (m.reverse) {
-    opts.scales = { ...opts.scales, y: { ...opts.scales.y, reverse: true, title: { display: true, text: m.yLabel || '', color: TEXT3, font: { size: 10 } } } };
-  } else if (m.yLabel) {
-    opts.scales = { ...opts.scales, y: { ...opts.scales.y, title: { display: true, text: m.yLabel, color: TEXT3, font: { size: 10 } } } };
+
+  let datasets;
+  if (isCombo) {
+    const carryData = sm.map(s => s.carryAvg != null ? +(+s.carryAvg).toFixed(1) : null);
+    const totalData = sm.map(s => s.totalAvg != null ? +(+s.totalAvg).toFixed(1) : null);
+    const speedData = sm.map(s => s.ballSpeedAvg != null ? +(+s.ballSpeedAvg).toFixed(1) : null);
+    opts.scales.y = { ...opts.scales.y, title: { display: true, text: 'yards', color: TEXT3, font: { size: 10 } } };
+    opts.scales.y2 = { position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'mph', color: TEXT3, font: { size: 10 } }, ticks: { color: TEXT3, font: { size: 10 } } };
+    datasets = [
+      { label: 'Carry', data: carryData, borderColor: GREEN, backgroundColor: GREEN + '22', tension: 0.3, fill: true, pointRadius: 4, pointBackgroundColor: GREEN, borderWidth: 2 },
+      { label: 'Total', data: totalData, borderColor: TEAL, backgroundColor: TEAL + '11', tension: 0.3, fill: false, pointRadius: 4, pointBackgroundColor: TEAL, borderWidth: 2 },
+      { label: 'Ball Speed', data: speedData, borderColor: BLUE, tension: 0.3, fill: false, pointRadius: 4, pointBackgroundColor: BLUE, borderWidth: 2, borderDash: [5, 3], yAxisID: 'y2' },
+    ];
+  } else {
+    const data = sm.map(s => s[m.key] != null ? +(+s[m.key]).toFixed(m.dec) : null);
+    if (m.reverse) {
+      opts.scales = { ...opts.scales, y: { ...opts.scales.y, reverse: true, title: { display: true, text: m.yLabel || '', color: TEXT3, font: { size: 10 } } } };
+    } else if (m.yLabel) {
+      opts.scales = { ...opts.scales, y: { ...opts.scales.y, title: { display: true, text: m.yLabel, color: TEXT3, font: { size: 10 } } } };
+    }
+    datasets = [
+      { label: m.label, data, borderColor: m.color, backgroundColor: m.color + '22', tension: 0.3, fill: true, pointRadius: 5, pointBackgroundColor: m.color, borderWidth: 2 },
+      { label: 'Trend', data: linearTrend(data), borderColor: GOLD, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, tension: 0 },
+    ];
   }
 
   charts.progress = new Chart(document.getElementById('progressChart'), {
     type: 'line',
-    data: {
-      labels,
-      datasets: [
-        { label: m.label, data, borderColor: m.color, backgroundColor: m.color + '22', tension: 0.3, fill: true, pointRadius: 5, pointBackgroundColor: m.color, borderWidth: 2 },
-        { label: 'Trend', data: linearTrend(data), borderColor: GOLD, borderDash: [6, 3], borderWidth: 2, pointRadius: 0, tension: 0 },
-      ]
-    },
+    data: { labels, datasets },
     options: opts,
   });
 }

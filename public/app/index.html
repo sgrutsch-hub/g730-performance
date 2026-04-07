@@ -745,15 +745,15 @@ function mapShot(shot, session) {
 }
 
 function buildDataFromShots(allShots, sessionList) {
-  // Group by (date, club) for session aggregates
+  // Group by (date, club, sessionId) so same-day sessions stay separate
   const groups = {};
-  allShots.forEach(s => { const k = `${s.date}|${s.club}`; (groups[k] = groups[k] || []).push(s); });
+  allShots.forEach(s => { const k = `${s.date}|${s.club}|${s.sessionId}`; (groups[k] = groups[k] || []).push(s); });
 
   const sessions = [];
   for (const [key, shots] of Object.entries(groups)) {
     const f = shots.filter(s => s.filtered);
     if (!f.length) continue;
-    const [date, club] = key.split('|');
+    const [date, club, sessionId] = key.split('|');
     const carries = f.filter(s => s.carry != null).map(s => s.carry);
     const speeds = f.filter(s => s.ballSpeed != null).map(s => s.ballSpeed);
     const spins = f.filter(s => s.spinRate != null).map(s => s.spinRate);
@@ -766,7 +766,7 @@ function buildDataFromShots(allShots, sessionList) {
     const clubSpeeds = f.filter(s => s.clubSpeed != null).map(s => s.clubSpeed);
     const apexes = f.filter(s => s.apex != null).map(s => s.apex);
     const ballType = f[0]?.ballType || 'tp5x';
-    sessions.push({ date, club, shotCount: f.length, ballType,
+    sessions.push({ date, club, sessionId, shotCount: f.length, ballType,
       ballSpeedAvg: avg(speeds), ballSpeedStd: std(speeds),
       carryAvg: avg(carries), carryStd: std(carries), carryMin: carries.length ? Math.min(...carries) : 0,
       carryMax: carries.length ? Math.max(...carries) : 0, carryMed: median(carries),
@@ -794,6 +794,21 @@ function buildDataFromShots(allShots, sessionList) {
   }
   clubSummaries.sort((a,b) => (BAG_ORDER[a.club] ?? 99) - (BAG_ORDER[b.club] ?? 99));
   for (let i = 0; i < clubSummaries.length - 1; i++) clubSummaries[i].gap = clubSummaries[i].carryAvg - clubSummaries[i+1].carryAvg;
+
+  // Compute display labels — append (#2, #3, ...) when multiple sessions share a date+club
+  const dateCounts = {};
+  sessions.sort((a,b) => a.date.localeCompare(b.date) || a.club.localeCompare(b.club));
+  sessions.forEach(s => {
+    const k = `${s.date}|${s.club}`;
+    dateCounts[k] = (dateCounts[k] || 0) + 1;
+    s._seq = dateCounts[k];
+  });
+  sessions.forEach(s => {
+    const k = `${s.date}|${s.club}`;
+    const total = dateCounts[k];
+    const short = s.date.replace(/-\d{4}$/, '');
+    s.label = total > 1 ? `${short} #${s._seq}` : short;
+  });
 
   return {
     shots: allShots,
@@ -1075,7 +1090,7 @@ function updateTrendChart(sess) {
   const s = sess.filter(s=>s.club===selectedClub).sort((a,b)=>a.date.localeCompare(b.date));
   if (charts.trend) charts.trend.destroy();
   const ctx = document.getElementById('trendChart'); if (!ctx) return;
-  charts.trend = new Chart(ctx, { type:'line', data:{ labels:s.map(x=>x.date.replace(/-\d{4}$/,'')),
+  charts.trend = new Chart(ctx, { type:'line', data:{ labels:s.map(x=>x.label),
     datasets:[{label:'Carry (yds)',data:s.map(x=>+x.carryAvg.toFixed(1)),borderColor:GREEN,backgroundColor:GREEN+'22',tension:.3,fill:true,pointRadius:4,pointBackgroundColor:GREEN},
     {label:'Ball Speed',data:s.map(x=>+x.ballSpeedAvg.toFixed(1)),borderColor:BLUE,borderDash:[4,4],tension:.3,pointRadius:3,pointBackgroundColor:BLUE}]}, options:chartOpts()});
 }
@@ -1295,7 +1310,7 @@ function updateSessionTable(sessions) {
   const sess=sessions.filter(s=>s.club===selectedClub).sort((a,b)=>a.date.localeCompare(b.date));
   const sign = (v, dec) => v != null && !isNaN(v) ? (v >= 0 ? '+' : '') + v.toFixed(dec) : '--';
   document.getElementById('sessionTable').innerHTML=`<tr><th style="text-align:left">Date</th><th>Carry</th><th>Std</th><th>Ball Spd</th><th>Club Spd</th><th>Spin</th><th>Launch</th><th>Apex</th><th>AoA</th><th>Path</th><th>Offline</th><th>Shots</th></tr>
-    ${sess.map(s=>`<tr><td>${s.date.replace(/-\d{4}$/,'')}</td>
+    ${sess.map(s=>`<tr><td>${s.label}</td>
     <td style="font-weight:600;color:${GREEN}">${s.carryAvg.toFixed(1)}</td><td>${s.carryStd.toFixed(1)}</td>
     <td>${s.ballSpeedAvg.toFixed(1)}</td><td>${s.clubSpeedAvg ? s.clubSpeedAvg.toFixed(0) : '--'}</td><td>${Math.round(s.spinRateAvg)}</td>
     <td>${s.launchAngleAvg.toFixed(1)}&deg;</td><td>${s.apexAvg ? s.apexAvg.toFixed(0) : '--'}</td>
@@ -1341,10 +1356,10 @@ function updateProgressTab() {
   }
 
   const sm = allSess.map(sess => {
-    const shots = DATA.shots.filter(s => s.filtered && s.club === sess.club && s.date === sess.date);
+    const shots = DATA.shots.filter(s => s.filtered && s.club === sess.club && s.sessionId === sess.sessionId);
     const off = shots.filter(s => s.offline != null).map(s => s.offline);
     return {
-      date: sess.date, label: sess.date.replace(/-\d{4}$/, ''),
+      date: sess.date, label: sess.label, sessionId: sess.sessionId,
       carryAvg: sess.carryAvg, carryStd: sess.carryStd, totalAvg: sess.totalAvg, ballSpeedAvg: sess.ballSpeedAvg,
       spinRateAvg: sess.spinRateAvg, launchAngleAvg: sess.launchAngleAvg,
       clubPathAvg: sess.clubPathAvg, faceAngleAvg: sess.faceAngleAvg,

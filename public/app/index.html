@@ -1510,7 +1510,7 @@ function saveWallpaper() {
   // Layout constants
   const pad = 40;
   const cardX = pad, cardW = W - pad * 2;
-  const cardTop = 580;
+  const cardTop = 730; // ~1 inch below clock widget (163 PPI × 1in ≈ 150px extra)
   const numClubs = bag.length;
   const rowH = Math.min(72, Math.floor((H - cardTop - 280) / (numClubs + 3)));
 

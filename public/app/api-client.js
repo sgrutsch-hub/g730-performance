@@ -404,11 +404,16 @@
    * @param {string} profileId
    */
   api.exportCSV = async function (profileId) {
-    const token = await getValidToken();
-    const resp = await fetch(API_BASE + '/sessions/export' + qs({ profile_id: profileId }), {
-      headers: { 'Authorization': 'Bearer ' + token },
-    });
-    if (!resp.ok) throw new Error('Export failed');
+    // Build auth header the same way apiFetch does
+    const token = getAccessToken();
+    if (!token) throw new SwingDoctorAPIError(401, 'Not logged in', 'auth_required');
+    const headers = { 'Authorization': 'Bearer ' + token };
+
+    const resp = await fetch(API_BASE + '/sessions/export' + qs({ profile_id: profileId }), { headers });
+    if (!resp.ok) {
+      const text = await resp.text().catch(() => '');
+      throw new SwingDoctorAPIError(resp.status, text || 'Export failed', 'export_error');
+    }
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

@@ -297,6 +297,82 @@ async def list_sessions(
     )
 
 
+@router.get("/export")
+async def export_csv(
+    profile_id: uuid.UUID = Query(...),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Export all shots as a clean CSV for offline analysis."""
+    result = await db.execute(
+        select(Profile).where(Profile.id == profile_id, Profile.user_id == user.id)
+    )
+    if not result.scalar_one_or_none():
+        raise NotFoundError("Profile", str(profile_id))
+
+    result = await db.execute(
+        select(Shot, Session.source_format)
+        .join(Session, Shot.session_id == Session.id)
+        .where(Shot.profile_id == profile_id)
+        .order_by(Shot.shot_date, Shot.club_name, Shot.shot_index)
+    )
+    rows = result.all()
+
+    FORMAT_LABELS = {
+        "bushnell_dr": "Square LM",
+        "bushnell_sa": "Foresight",
+        "bushnell_session": "Foresight",
+        "seed_import": "Import",
+    }
+
+    def _fmt(val: object) -> str:
+        if val is None:
+            return ""
+        return str(round(float(val), 1)) if isinstance(val, (float, int)) or hasattr(val, "__float__") else str(val)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "Date", "Club", "Ball Speed", "Club Speed", "Smash Factor",
+        "Carry", "Total", "Offline", "Launch Angle", "Spin Rate",
+        "Spin Axis", "Attack Angle", "Club Path", "Face Angle",
+        "Dynamic Loft", "Apex", "Landing Angle", "Ball Type",
+        "Filtered", "Shot Score",
+    ])
+
+    for shot, source_format in rows:
+        writer.writerow([
+            shot.shot_date.strftime("%m-%d-%Y"),
+            shot.club_name,
+            _fmt(shot.ball_speed_mph),
+            _fmt(shot.club_speed_mph),
+            _fmt(shot.smash_factor),
+            _fmt(shot.carry_yards),
+            _fmt(shot.total_yards),
+            _fmt(shot.offline_yards),
+            _fmt(shot.launch_angle_deg),
+            _fmt(shot.spin_rate_rpm),
+            _fmt(shot.spin_axis_deg),
+            _fmt(shot.attack_angle_deg),
+            _fmt(shot.club_path_deg),
+            _fmt(shot.face_angle_deg),
+            _fmt(shot.dynamic_loft_deg),
+            _fmt(shot.apex_feet),
+            _fmt(shot.landing_angle_deg),
+            shot.ball_type or "",
+            "Yes" if shot.is_filtered else "No",
+            _fmt(shot.shot_score),
+        ])
+
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    output.seek(0)
+    return StreamingResponse(
+        output,
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="swing-doctor-export-{today_str}.csv"'},
+    )
+
+
 @router.get("/{session_id}", response_model=SessionDetail)
 async def get_session(
     session_id: uuid.UUID,
@@ -360,81 +436,3 @@ async def delete_session(
 
     await db.delete(session)
     await db.commit()
-
-
-@router.get("/export")
-async def export_csv(
-    profile_id: uuid.UUID = Query(...),
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-) -> StreamingResponse:
-    """Export all shots as a clean CSV for offline analysis."""
-    # Verify ownership
-    result = await db.execute(
-        select(Profile).where(Profile.id == profile_id, Profile.user_id == user.id)
-    )
-    if not result.scalar_one_or_none():
-        raise NotFoundError("Profile", str(profile_id))
-
-    # Fetch all shots with session info
-    result = await db.execute(
-        select(Shot, Session.source_format)
-        .join(Session, Shot.session_id == Session.id)
-        .where(Shot.profile_id == profile_id)
-        .order_by(Shot.shot_date, Shot.club_name, Shot.shot_index)
-    )
-    rows = result.all()
-
-    FORMAT_LABELS = {
-        "bushnell_dr": "Square LM",
-        "bushnell_sa": "Foresight",
-        "bushnell_session": "Foresight",
-        "seed_import": "Import",
-    }
-
-    def _fmt(val: object) -> str:
-        if val is None:
-            return ""
-        return str(round(float(val), 1)) if isinstance(val, (float, int)) or hasattr(val, "__float__") else str(val)
-
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow([
-        "Date", "Club", "Ball Speed", "Club Speed", "Smash Factor",
-        "Carry", "Total", "Offline", "Launch Angle", "Spin Rate",
-        "Spin Axis", "Attack Angle", "Club Path", "Face Angle",
-        "Dynamic Loft", "Apex", "Landing Angle", "Ball Type",
-        "Filtered", "Shot Score",
-    ])
-
-    for shot, source_format in rows:
-        writer.writerow([
-            shot.shot_date.strftime("%m-%d-%Y"),
-            shot.club_name,
-            _fmt(shot.ball_speed_mph),
-            _fmt(shot.club_speed_mph),
-            _fmt(shot.smash_factor),
-            _fmt(shot.carry_yards),
-            _fmt(shot.total_yards),
-            _fmt(shot.offline_yards),
-            _fmt(shot.launch_angle_deg),
-            _fmt(shot.spin_rate_rpm),
-            _fmt(shot.spin_axis_deg),
-            _fmt(shot.attack_angle_deg),
-            _fmt(shot.club_path_deg),
-            _fmt(shot.face_angle_deg),
-            _fmt(shot.dynamic_loft_deg),
-            _fmt(shot.apex_feet),
-            _fmt(shot.landing_angle_deg),
-            shot.ball_type or "",
-            "Yes" if shot.is_filtered else "No",
-            _fmt(shot.shot_score),
-        ])
-
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    output.seek(0)
-    return StreamingResponse(
-        output,
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="swing-doctor-export-{today_str}.csv"'},
-    )
